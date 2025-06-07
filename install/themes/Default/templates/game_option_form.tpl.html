@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<!--
+Title:			Shadows Rising RPG "Install Default" Theme
+Designed by:	Maugrim The Reaper (http://www.quantum-star.com)
+Compliance:		XHTML 1.1
+Optimisation:	1024x768 Resolution // Mozilla Firefox 0.8
+-->
+
+<!--Using UTF-8 as <?xml?> declaration missing to avoid IE "quirks" mode rendering. Do not remove !DOCTYPE. Ensure document is fully validated before implementing.-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>{$app_name} Install Utility :: Game Manager</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="language" content="en" />
+<link rel="stylesheet" href="themes/Default/style_default.css" type="text/css" />
+</head>
+
+<body id="default_body">
+
+<div id="pagetop_logo">
+	<img src="../qsgen.gif" alt="{$code_base}"/>
+</div>
+
+<table cellspacing="0" class="invisible">
+<tr>
+<td id="page_leftpanel" style="text-align: left;">
+<!--This is the left side panel, for installation this is just a spacer-->
+
+
+
+
+<div>
+<br /><br /><br /><br />
+<ol>
+<li style="font-weight: bold; color: lightgreen;">Delete/Create Check</li>
+</ol>
+</div>
+
+
+
+
+<!--This is the end of the left side panel-->
+</td>
+<td id="page_centerpanel">
+<!--This is the center panel where user actions, text, and menus will appear-->
+
+<p class="h4">{$app_name} Game Manager</p>
+
+<p>
+Before proceeding please choose whether you wish to Create or Delete a game.
+</p>
+
+{if $warning_count > 0}
+<p style="color: red;">
+The {$app_name} Install Utility has detected <span style="color: #c0c0c0;">{$warning_count}</span> warnings. These are listed at the right hand side column of this page. Please ensure these warnings are cleared before proceeding with the installation. If you feel certain these warnings are not correct, you may attempt to continue installation.
+</p>
+{/if}
+{if $notice_count > 0}
+<p style="color: orange;">
+The {$app_name} Install Utility has detected <span style="color: #c0c0c0;">{$notice_count}</span> notices. These are listed at the right hand side column of this page. These are not essential to installation, but should be examined in further detail prior to operating a public game.
+</p>
+{/if}
+{if $warning_flag == "false" && $notice_flag == "false"}
+<p style="color: lightgreen;">
+No warnings or notices detected. Fire up your engines, you're good to go!
+</p>
+{/if}
+
+
+<p>
+Creating a game will generate all the necessary database tables. Deleting a Game will delete all relevant database tables and map images.
+</p>
+
+<div>
+<form method="post" action="game_manager.php" id="game_options">
+Create Game&nbsp;<input type="radio" name="install_step" value="3" checked="checked" />
+<br /><br />
+Delete Game&nbsp;<input type="radio" name="install_step" value="4" />
+<br /><br />
+<input type="submit" name="submit_button" value="Submit!" />
+</form>
+</div>
+
+
+<div>
+<!-- Insert a little space and keep the footer low -->
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+</div>
+
+<!--This is the end of the center panel-->
+</td>
+<td id="page_rightpanel">
+<!--This is the right side panel - another spacer-->
+
+
+{if $warning_flag == "true"}
+	{section name=i loop=$warnings}
+		<p class="h5" style="color: red;">Warning!</p>
+		<p style="color: red;">
+		{$warnings[i]}
+		</p>
+	{/section}
+{/if}
+{if $notice_flag == "true"}
+	{section name=j loop=$notices}
+		<p class="h5" style="color: orange;">Notice</p>
+		<p style="color: orange;">
+		{$notices[j]}
+		</p>
+	{/section}
+{/if}
+{if $warning_flag == "false" && $notice_flag == "false"}
+		<p style="color: lightgreen;">
+		No warnings or notices detected.
+		</p>
+{/if}
+
+
+<!--This is the end of the right side panel-->
+</td>
+</tr>
+<tr>
+<td colspan="3" id="page_footer">
+<!--This is the footer cell visible at the bottom of all pages-->
+
+	<p>
+		<br /><br /><br /><br /><br />
+		{$this_version} &copy; 2004 <a onclick="window.open(this.href,'_blank');return false;" href="../docs/copyright.html">Quantum Star SE Developers</a>
+		<br />
+		Default Install Theme &copy; 2004 Maugrim The Reaper and <a onclick="window.open(this.href,'_blank');return false;" href="../docs/copyright.html">Quantum Star SE Developers</a>
+		<br />
+		Original Install Code &copy; 2003, 2004 <a href="../docs/tki-copyright.html" onclick="window.open(this.href,'_blank');return false;">TKI Developers</a>
+		<br /><br /><br /><br /><br />
+	</p>
+	<div style="text-align: center;">
+		<img src="../core/images/standards/valid-xhtml11.png" alt="Valid XHTML 1.1!" /><img src="../core/images/standards/vcss.png" alt="Valid CSS!" />
+	</div>
+
+<!--This is the end of the footer cell-->
+</td>
+</tr>
+</table>
+<!--This is the end of the "holding" table created per Step Three-->
+
+</body>
+</html>

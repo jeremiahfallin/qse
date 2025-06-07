@@ -1,0 +1,2 @@
+0,30 * * * * /usr/bin/lynx -dump http://localhost/quantum/hourly_maint.php?server_passwd=password > /dev/null
+1 0,8,16 * * * /usr/bin/lynx -dump http://localhost/quantum/daily_maint.php?server_passwd=password > /dev/null

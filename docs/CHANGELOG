@@ -1,0 +1,233 @@
+=========================
+Changelog Quantum Star SE
+=========================
+
+=================================================
+= Version: Quantum Star Generations 0.7.2       =
+= Release Date: ?? February 2007                =
+=================================================
+
++ Bug fixes
+  - Multiple purchased used ships get named with the proper numeric suffix
+  - Fixed new fleet creation for newly purchased used ships and alien ships
+  - Various other minor bug fixes
++ Combat changes
+  - Battleship conversions now work correctly for freighters
+  - Only the planet with the most hostile fighters may be attacked
+  - Planets cannot be claimed while other planets have hostile fighters
+  - Planet names cannot be abused to "hide" planets from attacks
+  - Only one message is sent when a ship attacks a planet (never two)
++ Fleet menu changes
+  - Fleet Summary is now a sortable table with fleet details plus Command links for every fleet
+  - Fleet Management layout improved; Fleet Rename and Delete links added for easier management
+  - Create a Fleet uses a free fleet number
++ Clan improvements
+  - Fixed custom clan colors
+  - Clan score and fighter kills displayed
++ Interface enhancements
+  - Number of free orbits reported during planet creation process
+  - Player planet summary includes colonist allocations and overall totals
+  - Support per-category message deletion
+  - Clicking on the resource pictures in a star system takes you to the Mining page
+  - On the Mining page, the Metal/Fuel/No Mining column headers set all ships to mine that resource
+  - Removed message about taking command of a new ship costing turns (command changes are always free)
+  - Signatures properly shown in private messages
+  - User option to not show signatures is now honored
+  - Multiple ship upgrades fixed and slightly enhanced
++ Gameplay improvements
+  - Several ship types changed:
+    o Human and Blackstar specific ships are more balanced
+    o Man O Warp is fixed and may be purchased
+    o All ships (except the Mega-Flex) have at least a minimal number of fighters
+    o Some ship points adjusted to make more sense
+  - Orbital Bombardment completely disabled
+  - Damage of Mass Drivers decreased and damage of Terra Maelstrom increased
+  - Mass Driver now controlled by enable_superweapons
+  - Terra Maelstrom upgrade no longer removes the Quark Displacer (but one is still required)
+  - Artificial worm holes consume dark matter each DM and failure to have enough dark matter has consequences
+  - Black markets and alien shipyards move locations every few days
+  - Cost of all bombs changed to be more reasonable
+  - Delta bomb changed to do 2000 damage
+  - If enabled, SuperNova effecters can be purchased as intended
+  - Colonists sold at ports cost 20% more because the colonists have to travel from your homeworld
+  - Turn costs fixed for all buying, selling, loading, and emptying operations as follows
+    o All Buying/Selling costs 1 turn per ship affected up to a max of 5 turns
+    o All Loading/Unloading costs 1 turn per ship affected up to a max of 10 turns per fleet;
+        meaning when >10 ships in a single fleet are affected, you are charged a discounted 10 turns for that fleet
++ Bilko's changes
+  - Some interface cleanups and improvements
+  - Cost and chance of being generated for most items changed
+  - Items that may not have been generated before will be generated now
+  - Shield upgrades properly upgrade the max shields of the current ship
++ Random Event changes
+  - Star systems no longer renamed when affected by random events
+  - Metal mining rushes and Nebulas changed to have an infinitely refreshing guaranteed minimum metal/fuel plus an advanced regeneration rate
+  - Nebula mining rate increased to 3x and damage done to ships significantly decreased
+  - Fix to allow multiple Nebula clusters to be created as intended, but never in homeworld systems
+  - Fixed bugs in Supernova explosions destorying ships and planets
+  - More powerups should be available in the universe, but some powerup types are less likely to appear
+  - Cash, tech, and turn powerups should be more useful
++ Admin improvements
+  - Several new and enhanced admin only reports
+  - All admin ships can subspace jump
+  - Dark matter may be configured to be bought/sold at black markets
+  - Give money to all players fixed
+  - allow_signatures fixed
+  - Nebulas only created when random_events > 1
+  - Mining rush/Nebula advanced regeneration rate and guaranteed minimums based on uv_metal/fuel_max and rr_chance_metal/fuel_max variables
+  - Resources created in a Supernova explosion are based on rr_change_metal/fuel_min/max variables
+  - Powerup turns and tech amounts based on hourly_turns and hourly_tech
+  - flag_bomb changed; 0=no bombs, 1=alpha/gamma sold and in Bilko's, 2=1 + delta in Bilko's
+  - Bilkos items are only generated if enabled (e.g. Terra Maelstrom only when enable_superweapons is on)
+  - When appropriate, the cost and amount of Bilko's items is derived from config vars
+  - max_fleet_size minimum lowered to 10 (from 25)
++ Server improvements
+  - Several innocuous httpd errors eliminated
+
+=================================================
+= Version: Quantum Star Generations 0.7.1       =
+= Release Date: Decmber 2006                    =
+=================================================
+
++ Fixed all showstopping bugs I could find
++ Fixed a bug that prevented people from buying ships at Alien Shipyards
+  when such a purchase would cause the creation of a new fleet
++ Fixed Darkmatter visibility.  Now only ships that can mine darkmatter will see it
++ Fixed Admin naming in "Send Message" screen
++ Fixed ability for players to delete empty fleets
++ Fixed ability for admin to edit forum posts
++ Fixed problem where editing a forum post would remove it's formatting
++ Updated the default admin variables to be more balanced
++ Updated ship stats to be more balanced
++ Added Top Web Games reward script
++ Updated docs folder contents
+
+=================================================
+= Version: Quantum Star Generations 0.7 Gamma	=
+= Release Date: 7 August 2004                	=
+=================================================
+
++ Gamma version released by Ikoda.
+
+=========================================
+= Version: Quantum Star SE 2.2.0 RC-1   =
+= Release Date: 7 August 2004           =
+=========================================
+
+03 August 2004
+--------------
+
++ added a small fix to remove a negative user amount cheat in /includes/ship_loading.inc.php (thanks Superfrog!)
++ fixed an auto fleet-delete bug where an SQL query was malformed because of single quotes retained in an array's key name.
++ altered the clan_relation lookups in find_designation function of user.inc.php to fetch one column rather than the entire row + will speed up this frequent request substantially.
++ removed db query executions from login_form unless user's login_id is present in PHP Session array + save time
++ altered a "default" check (i.e. no express use of isset/empty) on $bad_config, in install.php to prevent the script blocking the remaining installation process in circumstance where PHP fails to get the correct value for register_globals from its configuration
+
+
+
+21 July 2004
+------------
+
++ added some additional code to fleet_command.php to automatically delete empty fleets after a transfer of ships
++ login process contains code to enable logins without javascript enabled + this is invalid as game requires javascript, as a result the non-javascript code has been removed as an added security precaution.
++ added code to ship_combat.php to automatically delete defeated empty fleets after a battle (untested)
++ Bilkos has been disabled from earth.php and port.php + file removed to non-distributed obsolete directory
++ Page title block added to earth menu + earth.php line 116-117
++ Finbarrs has been removed from the game (temporarily like Bilkos)
++ create_server.php, create_game.php amended to use correct reference to Q-LIB backend
+
+
+
+
+
+=========================================
+= Version: Quantum Star SE 2.2.0 Beta-3 =
+= Release Date: 20 July 2004            =
+=========================================
+
+16 July + 19 July 2004
+----------------------
+
++ oddly the ship_build.php bug was not present in the code after I double checked + very strange
++ updated hourly_maint.php mining code to correctly make the mine mode value equal the current iterations resource_id correctly when selecting ships mining a resource. + thanks to programmermatt
++ amended hourly_maint.php to add a database query to add taxation amount to a planet's cash + a mod on matt's solution.
++ amended daily_maint.php to make $planet global in the Produce_Fighters() function + programmermatt spotted the error, however a global call on $planet makes the later adjustment to the $planet array take effect with ref.
++ minor daily_maint.php update (based on guess who? yes? programmermatt's report). Error ignored all inactive players if id's less than 6 + updated to check all player with id > 2 (Admin and Server Admin accounts)
++ again due to matt :) amendment to hourly_maint.php to increment launch pad building by 0.5 hours rather than 1 hr
++ on above + change in launch_pad field of QUANTUM_planets in SQL schema to use FLOAT rather than INTEGER to support decimal values.
++ fixed the location.php page Mining notification + yes, matt's a genius...:)
++ it's getting old, matt + fixed some questionable html syntax in location.php for Subspace Warps, fixed formatting while there and resolved a possible name conflict.
++ updated most of the mining.php links to pass the "overview" variable so overview is displayed immediately.
+
+
+
+3 July + 15 July 2004
+---------------------
+
++ common.inc.php exported to an include file common_funcs.inc.php in /includes/
++ amended user.inc.php and common.inc.php to enable use of new include file
++ transferred most of the backend functions to the new Q-LIB library directory
++ several minor updates to db_funcs.inc.php in /admin/includes/ to reflect the standard Q-LIB version
++ Q-LIB updated to version 0.0.2b (as amended for QS quirks) + will eventually mirror same library in Shadows Rising RPG Engine 0.0.3
++ amended misc files for relation field name changes + additional changes still required to finalise Postgres compatibility of these QS areas
++ Smarty configuration script updated, Smarty engine now available within QS + no templates until 2.3.0 :(
++ minor amendment to update link to ADOdb from login_form.php to reflect website location change.
+
+
+=========================================
+= Version: Quantum Star SE 2.2.0 Beta-2 =
+= Release Date: 3 July 2004             =
+=========================================
+
+
+28 June + 2 July 2004
+---------------------
+
++ daily_maint.php rewritten
++ hourly_maint.php rewritten
++ daily_tip sql query deleted from daily_maint.php
++ colonist taxation and population reproduction altered to apply to all colonists
++ taxation altered to apply a reproduction factor of 0.01 * (tax_rate/2)
++ fixed division by zero error where tax_rate = 0
++ removed db_vars sql queries in daily_maint and hourly maint (queried from common.inc.php)
++ post server news link corrected in /admin/index.php
++ fixed bug allowing mass ship purchasing of Flagships (changed ship_categ check from =9 to =10)
++ forum post signatures re-added for display
++ login system storage of challange string (an md5(uniqid) hash) corrected by deleting old challenges at *next* login_form execute
++ integrated adodb performance class into Admin panel
++ amended db_funcs.inc.php to support SQL logging if enabled
++ amended db_funcs.inc.php in /admin/includes/ for misc updates
++ upgraded adodb to 4.22
++ amended ship_transfer.php to auto-create a "transfer" fleet for accepted ship transfers, re-location no longer enabled
++ amended ship_transfer.php to re-send messages to transferee on receipt of transfer request from transferer
++ reversed field name of clan relation id to fix bug in Relations (must revert later for PostgreSQL compat)
++ removed politics from hourly_maint.php
++ created copyright notices page in /docs/
++ copied tki copyright html to /docs/
++ edited footer.php in /themes/red_Tempest/ to use new copyright notices
++ added copyright footer to install.php, create_server.php, create_game.php
++ replaced tki copyright para stating distribution required under GPL (it's not)
++ integrated new login sys into all files (challenge/response auth, sessions, OOP focus)
++ deleted cookie resets on location.php, misc files
++ replaced cookie instances in common.inc.php with $_SESSION superglobal
++ misc edits for forward PostgreSQL compat
++ updated ship shops to ignore ships on auction
++ replaced hourly_maint.php mining sections with single function (corrected for negative results)
++ updated ship_types table: added mine_rate field to replace mine_rate_fuel, mine_rate_metal, mine_rate_darkmatter
++ misc updates to use mine_rate field
++ misc schema updates written to /sql/mysql/ SQL dumpfiles
++ misc edits to /docs/copyright.html
++ updated planet.php to account for tax/reproduction changes in daily_maint.php
++ created a simple list and optimise function for game database tables (run at daily_maint)
+
+
+
+
+
+
+
+
+
+Copyright (c) 2004 Quantum Star SE Developers
+http://www.quantum-star.com
+All Rights Reserved.

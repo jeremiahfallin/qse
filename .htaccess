@@ -1,0 +1,7 @@
+# If you get any problems deleting this file might help.
+# Then again, it might make things worse.
+
+
+# QS Gen currently requires the following php variables to be set as so...
+php_value display_errors Off
+php_value register_globals On

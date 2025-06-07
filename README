@@ -1,0 +1,49 @@
+*******************************************************************************
+**                                                                           **
+**                         Quantum Star: Generations                         **
+**                               Version 0.7.2                               **
+**                                                                           **
+**                               Release Notes                               **
+**                                                                           **
+*******************************************************************************
+
+
+Welcome to Quantum Star: Generations!
+
+QS:Gen is a competitive browser-based space strategy and combat style game. No
+downloads are required to play. Players aim to upgrade their fleets of mining
+and war vessels, support their planets, and produce fighters all in order to
+defeat enemy clans, and fractions, of other players.
+
+
+Installation
+------------
+
+Whether you are updating an existing installation or creating a new one, refer
+to the docs/install file for detailed instructions.
+
+
+Special 0.7.1 -> 0.7.2 Upgrade Instructions
+-------------------------------------------
+
+If you have an existing 0.7.1 installation, you can upgrade to 0.7.2 and
+continue playing any games in progress. If no games are in progres, it is
+recommended that you perform a new installation (optionally preserving all
+existing user accounts).
+
+To upgrade 0.7.1 to 0.7.2:
+1) Backup your existing 0.7.1 source and database
+2) Un-tar 0.7.2 over the existing 0.7.1 source
+3) Use phpMyAdmin (or mysql or whatever) to execute the commands in the
+   install/sql/mysql/update_sql.sql file on your existing 0.7.1 database.
+
+Note: The database changes in 0.7.2 include changes to the ship types. Thus all
+      new ships will use these new types, but all existing ships will remain as
+      they were in 0.7.1.
+
+
+List of Changes
+---------------
+
+For a complete list of changes in each release of QS:Gen, see the
+docs/CHANGELOG file.

@@ -1,0 +1,79 @@
+<br /><br /><br />
+</p>
+
+
+
+
+{if $critical_count > 0}
+<p style="color: red;">
+The {$app_name} Install Utility has detected <span style="color: #c0c0c0;">{$critical_count}</span> critical errors. These are listed at the bottom of the page. Please ensure the cause of there errors are cleared before proceeding with game creation.
+</p>
+{/if}
+
+
+{if $critical_flag == "true"}
+
+	{section name=i loop=$criticals}
+
+		<p class="h5" style="color: red;">Critical Error!</p>
+		<p style="color: red;">
+		{$criticals[i]}
+		</p>
+
+	{/section}
+
+{else}
+
+<p>
+This game has been successfully added to the Game Listing. All tables required to run this game have been added to the database. To login and set up final options for the game, as well as generating a universe and map images, login with the username &quot;Admin&quot; with the password you set in the original Server Options. To enter a specific game you will require the secondary password you set in the Game Options before installing the game database tables.
+</p>
+<p>
+Installation of {$app_name} is now complete. You may access the Game Manager at any time to add additional games, or delete games you no longer require.
+</p>
+<p>
+<form method="post" action="redirect_to_index.php" id="redirect">
+<input type="submit" name="submit" value="Finish!" />
+</form>
+</p>
+
+{/if}
+
+<div>
+<!-- Insert a little space and keep the footer low -->
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+</div>
+
+<!--This is the end of the center panel-->
+</td>
+
+<!--No right side panel for SQL listing-->
+
+</tr>
+<tr>
+<td colspan="3" id="page_footer">
+<!--This is the footer cell visible at the bottom of all pages-->
+
+	<p>
+		<br /><br /><br /><br /><br />
+		{$this_version} &copy; 2004 <a onclick="window.open(this.href,'_blank');return false;" href="../docs/copyright.html">Quantum Star SE Developers</a>
+		<br />
+		Default Install Theme &copy; 2004 Maugrim The Reaper and <a onclick="window.open(this.href,'_blank');return false;" href="../docs/copyright.html">Quantum Star SE Developers</a>
+		<br />
+		Original Install Code &copy; 2003, 2004 <a href="../docs/tki-copyright.html" onclick="window.open(this.href,'_blank');return false;">TKI Developers</a>
+		<br /><br /><br /><br /><br />
+	</p>
+	<div style="text-align: center;">
+		<img src="../core/images/standards/valid-xhtml11.png" alt="Valid XHTML 1.1!" /><img src="../core/images/standards/vcss.png" alt="Valid CSS!" />
+	</div>
+
+<!--This is the end of the footer cell-->
+</td>
+</tr>
+</table>
+<!--This is the end of the "holding" table created per Step Three-->
+
+</body>
+</html>

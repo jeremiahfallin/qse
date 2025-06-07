@@ -1,0 +1,860 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<!--
+Title:			Quantum Star SE "Blue Tempest" Theme
+Designed by:	Maugrim The Reaper (http://www.quantum-star.com)
+Compliance:		XHTML 1.1
+Optimisation:	1024x768 Resolution // Mozilla Firefox 0.8
+-->
+
+<!--Using UTF-8 as <?xml?> declaration missing to avoid IE "quirks" mode rendering. Do not remove !DOCTYPE. Ensure document is fully validated before implementing.-->
+
+<!--Step One
+
+Create the heading. This contains all headers, meta tags and <html> attributes required by XHTML 1.1. Without ALL of these the page may not be recognised as XHTML by the browser, and so get rendered in "quirks" mode. "Quirks" mode may fall back on anything down to HTML 4, leading to varied display difference between IE and other browsers.
+
+See the style_deepblue.css stylesheet to where colours/borders/widths etc. are decided. Can edit this to change the properties of all elements in this page.
+
+Curly brackets indicate a variable to be replaced by the PHP script called using Smarty templating.
+
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>{$app_name} :: Star System #{$star.star_id} {$star.name}</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="language" content="en" />
+<link rel="stylesheet" href="../style_tpl.css" type="text/css" />
+<script language="JavaScript1.2" src="../../../javascript_lib.js" type="text/javascript"></script>
+</head>
+<body id="default_body">
+
+<!--Step Two
+
+Need to create a standard menu bar at the top of the page.
+
+-->
+
+<table border="0" cellspacing="0" cellpadding="1" width="100%">
+	<tr>
+		<td valign="top" width="175">
+			<table border="0" cellspacing="0" cellpadding="1" width="100%">
+				<tr>
+					<td valign="center" align="center"><a href="http://www.quantum-star.com/" target="_blank"><img src="../../../images/powered/quantumstar_se_small.png" border="0" width="173" height="33" alt="Quantum Star SE"></a></td>
+				</tr>
+			</table>
+		</td>
+		<td width="20"></td>
+		<td valign="top">
+			<table cellspacing="0" cellpadding="0" class="menu_border" align="center">
+				<tr>
+					<td valign="center" align="center" width="100%" colspan="5">
+						<table cellspacing="0" cellpadding="0" width="100%">
+							<tr>
+								<td class="menu">
+									&nbsp;<a href="{$url_prefix}/location.php" title="Home" class="button">Home</a>&nbsp;
+								</td>
+								<td class="menu">
+									&nbsp;<a href="{$url_prefix}/fleet_command.php?summary=1" title="Fleets" class="button">Fleets</a>&nbsp;
+								</td>
+								<td class="menu">
+									&nbsp;<a href="{$url_prefix}/mining.php?overview=1" title="Mining" class="button">Mining</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/clan.php" title="Clan" class=button>Clan</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/player_relations.php?relations=1" title="Relations" class=button>Relations</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/diary.php" title="Diary" class=button>Diary</a>&nbsp;</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/news_maint.php" title="Maintenance News" class=button>Maints</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/player_stat.php" title="Rankings" class=button>Rankings</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/options.php" title="Options" class=button>Options</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/help.php" target=_new title="Help" class=button>Help</a>&nbsp;
+								</td>
+								<td class=menu>
+									&nbsp;<a href="{$url_prefix}/logout.php?logout_single_game=1" title="Logout" class=button>Logout</a>&nbsp;
+								</td>
+								<td class="menu">
+									&nbsp;<a href="{$url_prefix}/admin/index.php" title="Admin Menu" class="button">Admin</a>&nbsp;
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td valign="center" width="100%" colspan="5">
+						<table cellspacing="0" cellpadding="0" width="100%">
+							<tr>
+								<td class="menu" width="20%" nowrap>
+									<a href="{$url_prefix}/ship_transfer.php?buffer=1" title="Check your Ship Transfer Buffer" class="button">Transfers</a>
+								</td>
+								<td class="menu" width="20%" nowrap>
+									<b style="font-size: 10px; font-weight: bold">No Msgs</b> - <a href="{$url_prefix}/message.php" title="Send Message" class="button">Send</a>&nbsp;
+								</td>
+								<td class="menu" width="20%" nowrap>
+									<a href="{$url_prefix}/forum_game.php" title="Enter Forum" class="button">Forum</a>
+								</td>
+								<td class="menu" width="20%" nowrap>
+									<a href="{$url_prefix}/forum.php?clan_forum=1" title="Read New Posts" class="button">Clan Forums</a>
+								</td>
+								<td class="menu" width="20%" nowrap>
+									<a href="{$url_prefix}/news.php" title="Enter Clan Forum" class="button">News</a>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+
+
+		<td width="20">
+		</td>
+
+		<td width="202" valign="top" align="center">
+		</td>
+	</tr>
+</table>
+
+
+<!--Step Three
+
+Create the page structure. For this simple template I have created a single "holding" table. This consists of 4 cells. 3 cells make up the right panel, center panel, and left panel. A fourth cell beneath the others, with a colspan of 3, is the width of the full page and is used for footer information (copyright, validation link, etc.)
+
+In this form:
+
+<table>
+	<tr>
+		<td>RIGHT</td>
+		<td>CENTER</td>
+		<td>LEFT</td>
+	</tr>
+	<tr>
+		<td colspan="3">FOOTER</td>
+	</tr>
+</table
+
+-->
+
+
+<table cellspacing="0" class="invisible">
+<tr>
+<td id="page_leftpanel">
+<!--This is the left side panel, this holding table cell will contain tables for user information-->
+
+
+			<!--Game Information Summary-->
+			<div align="center">
+			<table cellspacing="0" class="full_border">
+				<tr>
+					<th colspan="2">
+						<div>{$gametime}</div>
+					</th>
+				</tr>
+				<tr>
+					<td class="halfwidth">
+						&nbsp;Game:
+					</td>
+					<td class="halfwidth">
+						<a href="{$url_prefix}/game_info.php?new_page=1">{$gamename}</a>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<table cellspacing="0" class="invisible">
+							<tr>
+								<td class="halfwidth_left">
+									Days Left:
+								</td>
+								<td class="halfwidth_left">
+									<b>{$daysleft}</b>
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Days to SD:
+								</td>
+								<td class="halfwidth_left">
+									<b>{$daystosd}</b>
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									{if $user.login_id == 1}
+									<a href="{$url_prefix}/active_users.php">Active Users</a>:
+									{else}
+									Active Users:
+									{/if}
+								</td>
+								<td class="halfwidth_left">
+									<b>{$activeusers}</b>
+									{if $admin_online == "true"}
+									<b class="title_text">&nbsp;(A)</b>
+									{/if}
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+			<br />
+			</div>
+
+
+			<!--Player Status-->
+			<div align="center">
+			<table cellspacing="0" class="full_border">
+				<tr>
+					<th>
+						<div><a href="{$url_prefix}/player_info.php?target=1" style="font-weight: normal;">{$user.login_name}</a>
+						{if $user.clan_id > 0}
+						(<span style="color: {$user.};">{$user.}</span>)
+						{/if}
+						</div>
+					</th>
+				</tr>
+				<tr>
+					<td>
+						<table cellspacing="0" class="invisible">
+							<tr>
+								<td class="halfwidth_left">
+									Credits:
+								</td>
+								<td class="halfwidth_left">
+									{$user.cash}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									T. Units:
+								</td>
+								<td class="halfwidth_left">
+									{$user.tech}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Turns:
+								</td>
+								<td class="halfwidth_left">
+									{$user.turns} / {$gamevar.max_turns}
+								</td>
+							</tr>
+							{if $user.safe_turns > 0}
+							<tr>
+								<td class="halfwidth_left">
+									Safe Turns:
+								</td>
+								<td class="halfwidth_left">
+									{$user.safe_turns}
+								</td>
+							</tr>
+							{/if}
+							<tr>
+								<td class="halfwidth_left">
+									Score:
+								</td>
+								<td class="halfwidth_left">
+									{$user.score}
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+			<br />
+			</div>
+
+
+			<!--Command Ship Summary-->
+			<div align="center">
+			<table cellspacing=0 class="full_border">
+				<tr>
+					<th>
+						Ship In Command
+					</th>
+				</tr>
+				<tr>
+					<td>
+						<table cellspacing=0 class="invisible">
+							<tr>
+								<td class="halfwidth_left">
+									Ship Type:
+								</td>
+								<td class="halfwidth_left">
+									{$user_ship.}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Ship Name:
+								</td>
+								<td class="halfwidth_left">
+									{$user_ship.}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Fleet:
+								</td>
+								<td class="halfwidth_left">
+									{$user_fleet.fleet_name}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Fighters:
+								</td>
+								<td class="halfwidth_left">
+									{$user_ship.fighters} / {$user_ship.max_fighters}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Shields:
+								</td>
+								<td class="halfwidth_left">
+									{$user_ship.shields} / {$user_ship.max_shields}
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									Config:
+								</td>
+								<td class="halfwidth_left">
+									fr:sa:br
+								</td>
+							</tr>
+							<tr>
+								<td class="halfwidth_left">
+									A/D Bonus:
+								</td>
+								<td class="halfwidth_left">
+									0-200
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+			<br />
+			</div>
+
+
+			<!--Cargo of Command Ship-->
+			<div align="center">
+			<table cellspacing="0" class="full_border">
+				<tr>
+					<th colspan=2>
+						Ship Cargo
+					</th>
+				</tr>
+				<tr>
+					<td class="halfwidth_left">
+						<img height="12" width="14" alt="Fuel" title="Fuel" src="../../../images/fuel.jpg" /> Fuel:
+					</td>
+					<td class="halfwidth_left">
+						1500
+					</td>
+				</tr>
+			</table>
+			<br />
+			</div>
+
+
+			<!--The Side Menu-->
+			<div align="center">
+			<table cellspacing="0" class="full_border">
+				<tr>
+					<th>
+						Side Menu
+					</th>
+				</tr>
+				<tr>
+					<td>
+						<table cellspacing=0 class="invisible">
+							<tr>
+								<td style="text-align: left;">
+									<a href="location.php">Star System</a><br /><a href="http://se.cornerjukebox.com/forum/" target="_blank">Global Forum</a><br /><a href="http://www.se-central.net" target="_blank">SE-Central Forum</a><br /><a href="clan.php">Clan Control</a>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+			</div>
+
+
+
+<!--This is the end of the left side panel-->
+</td>
+
+<!--Add a space of 20 pixels before next column-->
+<td style="width: 20px;">
+</td>
+
+<!--Start the center column-->
+<td id="page_centerpanel">
+<br /><br />
+
+<!--This is the center panel where user actions, text, and menus will appear-->
+
+	<!--The Star System Summary Table-->
+	<div align="center">
+	<table cellspacing="0" class="full_border" style="width: 55%;">
+		<tr>
+			<td style="text-align: center;">
+				<img src="../../../images/sys_type/sys_type_0.png" width="65" height="65" alt="Normal Space" title="Normal Space: Visibility 100%" />
+			</td>
+			<td style="text-align: center;">
+				<div class="h5">Star System (#1)<br />
+				<span class="title_text">Sol</span><br /><br /></div>
+				<div>Warp: |&nbsp;&nbsp;<a href="location.php?toloc=244">244</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="location.php?toloc=122">122</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="location.php?toloc=53">53</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="location.php?toloc=96">96</a>&nbsp;&nbsp;|<br /><a href="autowarp.php">Set AutoWarp</a></div>
+			</td>
+		</tr>
+	</table>
+	</div>
+
+	<!--The Mining Resources Summary Table-->
+	<div align="center">
+	<table cellspacing="0" class="full_border" style="border-top: 0px; width: 55%;">
+		<tr>
+			<td>
+				<table cellspacing="0" class="invisible">
+					<tr>
+						<td>
+							<div style="text-align: center;"><em>No mining resources detected.</em></div>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+	<br />
+	</div>
+
+	<!--Star System Facilities and Planets-->
+	<div align="center">
+	<table cellspacing="0" class="invisible">
+		<tr>
+			<td style="width: 100%;">
+				<table cellspacing="0" class="invisible">
+					<tr>
+						<td style="text-align: center; vertical-align: top; width: 33.3%;">
+							<div>
+							<a href="port.php?port_id=1">
+								<img src="../../../images/starport.jpg" height="51" alt="Starport 1" title="Starport 1" />
+							</a><br /><span class="title_text">Starport 1</span>
+							</div>
+						</td>
+						<td style="text-align: center; vertical-align: top; width: 33.3%;">
+							<div>
+							<a href="science.php"><img src="../../../images/sport.jpg" height="50" alt="Sol Observatory" title="Sol Observatory" /></a><br /><span class="title_text">Observatory</span>
+
+						</td>
+						<td style="text-align: center; vertical-align: top; width: 33.3%;">
+							<div>
+							<a href="earth.php"><img src="../../../images/planet_s0.gif" width="51" height="51" alt="Planet Earth" title="Planet Earth" /></a>
+							<br /><span style="color: lime;">Planet</span> <span class="title_text">Earth</span><br /><a href="planet.php?planet_id=1">Planet Control</a>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+	<br />
+	</div>
+
+	<!--Player's Fleet Listing-->
+	<div align="left">
+	<table cellspacing="0" class="full_border">
+		<tr>
+			<th colspan="2">
+				Fleet Ships
+			</th>
+		</tr>
+		<tr>
+			<td style="width: 100%;">
+				<table cellspacing="0" class="invisible">
+					<tr>
+						<td nowrap="nowrap" colspan="10">
+							<table cellspacing="0" class="invisible">
+								<tr>
+									<td colspan="10">
+										You have 32 ship(s) in this system.<br />
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="10">
+							<span class="title_text">Summary of Fleets in Star System #1:</span>
+							<br />
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<table cellspacing="0" class="invisible">
+								<tr>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b>Fleet 4&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b><a href="#" onClick="window.open('fleet_listing.php?id=4', 'popup', 'height=500,width=450,screenX=150,screenY=150,top=0,left=0,toolbar=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes');">Miner C</a></b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ships:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 25&nbsp;&nbsp;<b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Fighters:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+
+										<b> 0&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ship Classes:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 1&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<a href="location.php?new_command=4">Command</a>
+									</td>
+									<td>
+									</td>
+								</tr>
+								<tr>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b>Fleet 10&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b><a href="#" onClick="window.open('fleet_listing.php?id=15', 'popup', 'height=500,width=450,screenX=150,screenY=150,top=0,left=0,toolbar=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes');">YoY</a></b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ships:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 7&nbsp;&nbsp;<b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Fighters:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 0&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ship Classes:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 1&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<em>Commanding</em>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										&nbsp;&nbsp;<a href="location.php?ramfleet=15">Ramscoops (on)</a>
+									</td>
+									<td>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</td>
+			<td style="vertical-align: top; text-align: right; width: 5%;">
+				<a href="location.php?show_user_ships=1">Show All</a>
+			</td>
+		</tr>
+	</table>
+	<br />
+	</div>
+
+
+	<!--Other (non-player/enemy) Fleet Listing-->
+	<div align="left">
+	<table cellspacing="0" class="full_border">
+		<tr>
+			<th colspan="8">
+				Enemy/Other Ships
+			</th>
+		</tr>
+		<tr>
+			<td style="width: 100%;">
+				<table cellspacing="0" class="invisible">
+					<tr>
+						<td colspan="10">
+							<div><span class="title_text">Summary of Enemy/Other Fleets in Star System #1:</span>
+							<br /></div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<table cellspacing="0" cellpadding="2" border="0" width="100%">
+								<tr>
+									<td width="1%" align="left" nowrap="nowrap">
+										<a href="player_info.php?target=10" style="font-weight: normal;">Paladius</a>&nbsp;&nbsp;
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Fleet:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b><a href="#" onClick="window.open('fleet_listing.php?id=23', 'popup', 'height=500,width=450,screenX=150,screenY=150,top=0,left=0,toolbar=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes');">Pallid</a></b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ships:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 1&nbsp;&nbsp;<b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Fighters:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 0&nbsp;&nbsp;</b>
+									</td>
+									<td width="1%" align="right" nowrap="nowrap">
+										Ship Classes:
+									</td>
+									<td width="1%" align="left" nowrap="nowrap">
+										<b> 1&nbsp;&nbsp;</b>
+									</td>
+									<td>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</td>
+			<td style="vertical-align: top; text-align: right; width: 5%;">
+				<a href="location.php?show_enemy_ships=1">Show All</a>
+			</td>
+		</tr>
+	</table>
+	</div>
+
+
+<!--This is the end of the center panel-->
+</td>
+<td width="20">
+</td>
+<td id="page_rightpanel">
+<!--This is the right side panel for holding maps and location overview-->
+
+	<!--Universe Map Display-->
+	<div align="center">
+	<table cellspacing="0" class="full_border" style="width: 200px;">
+		<tr>
+			<th>
+				Universe Map
+			</th>
+		</tr>
+		<tr>
+			<td>
+				<a href="map.php" target="_blank"><img src="../../../maps/trade/sm1.png" width="196" height="196" alt="Map of Region around SS #1" /></a>
+			</td>
+		</tr>
+	</table>
+	<br />
+	<div>
+
+	<!--Fleet Links for Movement-->
+	<div align="center">
+	<form method="post" action="location.php" name="fleet_mangt">
+	<table cellspacing="0" class="full_border">
+		<tr>
+			<th>
+				Fleet Links
+			</th>
+		</tr>
+		<tr>
+			<td>
+				<input type="checkbox" name="lnks[4]" value="4" checked="checked" /> Fleet No. 4 "Miner C"
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="hidden" name="chng_lnks" value="1" /><div align="center"><input type="submit" value="Confirm" /></div>
+			</td>
+		</tr>
+	</form>
+	</table>
+	<br />
+	</div>
+
+	<!--Additional Fleet Available Weapons-->
+	<div align="center">
+	<table cellspacing="0" class="full_border">
+		<tr>
+			<th colspan="2">
+				Weaponry
+			</th>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				Genesis Device (<b>1</b>)
+			</td>
+			<td class="halfwidth_right">
+				<a href="planet_build.php?location=1">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				Alpha Bomb (<b>1</b>)
+			</td>
+			<td class="halfwidth_right">
+				<a href="bombs.php?alpha=1">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				Gamma Bomb (<b>1</b>)
+			</td>
+			<td class="halfwidth_right">
+				<a href="bombs.php?bomb_type=1">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				SuperNova Effector
+			</td>
+			<td class="halfwidth_right">
+				<a href="bombs.php?sn_effect=1">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				Hornet Mines (<b>10</b>)
+			</td>
+			<td class="halfwidth_right">
+				<a href="ai_bombs.php?m_type=2">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="halfwidth_left">
+				Graviton Mines (<b>10</b>)
+			</td>
+			<td class="halfwidth_right">
+				<a href="ai_bombs.php?m_type=1">Deploy</a>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="text-align: left;">
+				Terra Imploder (<b>1</b>)
+			</td>
+		</tr>
+	</table>
+	<br />
+	</div>
+
+	<!--Top 5 Player Listing-->
+	<div align="center">
+	<table cellspacing="0" class="full_border">
+		<tr>
+			<th colspan="5">
+				Top 5 Players
+			</th>
+		</tr>
+		<tr>
+			<td class="title_text">
+				R
+			</td>
+			<td class="top5plyrs">
+				Name
+			</td>
+			<td class="top5plyrs">
+				Turns
+			</td>
+			<td class="top5plyrs">
+				Score
+			</td>
+		</tr>
+		<tr>
+			<td class="top_b">
+				<b>1</b>
+			</td>
+			<td class="top5">
+				<div><a href="player_info.php?target=6" style="font-weight: normal;">Maugrim</a> (<span style="color: #00FF00;">KiL</span>)</div>
+			</td>
+			<td class="top5">
+				<b>238</b>
+			</td>
+			<td class="top5">
+				<b>0</b>
+			</td>
+		</tr>
+		<tr>
+			<td class="top_b">
+				<b>2</b>
+			</td>
+			<td class="top5">
+				<a href="player_info.php?target=2" style="font-weight: normal;">Server Operator</a></td><td class="top5"><b>0</b>
+			</td>
+			<td class="top5">
+				<b>0</b>
+			</td>
+		</tr>
+		<tr>
+			<td class="top_b">
+				<b>3</b>
+			</td>
+			<td class="top5">
+				<a href="player_info.php?target=10" style="font-weight: normal;">Paladius</a>
+			</td>
+			<td class="top5">
+				<b>0</b>
+			</td>
+			<td class="top5">
+				<b>0</b>
+			</td>
+		</tr>
+	</table>
+	</div>
+
+
+
+
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+</table>
+
+
+
+<div align="center">
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br />
+<table id="footer">
+	<tr>
+		<td style="text-align: center;">
+			<div>Quantum Star SE 2.3.0 Beta-2 &copy; 2002-2004 <a href="http://localhost/testqsse/docs/copyright.html" target="_blank">Quantum Star Project and Individual Authors</a><br /><a href="http://www.quantum-star.com" target="_blank">http://www.quantum-star.com</a><br />Quantum Star SE is optimised for 1024x768 resolution and <a href="http://www.mozilla.org/" target="_new">Mozilla Firefox 0.8/ Mozilla 1.5</a> or better.</div>
+		</td>
+	</tr>
+</table>
+<br />
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,91 @@
+Quantum Star Generations 0.7.2 Installation Doc - Last Updated 11 December 2006
+
+IMPORTANT NOTE: THE NEW INSTALL UTILITY AS AT 29 SEPTEMBER 2004 IS NOW AVAILABLE BY OPENING THE INSTALL.PHP SCRIPT WITHIN THE /INSTALL/ DIRECTORY.
+
+Contents:
+
+1. Installation Guide
+2. Top Web Games Listing
+3. Troubleshooting
+
+/////////////
+///   1   ///    INSTALLATION GUIDE
+/////////////
+
+Without going into too much detail (an installation and resource guide is outstanding):
+
+Point your browser to install.php and follow the onscreen instructions.
+Please take the following steps before installation:
+
+1. Create/Choose the Database under MySQL you wish to install the QS tables to.
+2. Make sure you know the full system path to the QS file directory.
+3. Make sure the mysql user and password are known, and have permissions for the database chosen above.
+4. Check your PHP version has GD installed (an image package used in QS for map making)
+5. Set permissions on /maps and /qlib/config to be writable by the web server.
+
+6. (NEW) Quantum Star SE now includes the ADOdb 4.03 Database Abstraction Layer as standard. This will enable users to employ alternative database systems in using QS, such as PostgreSQL or SQLite. At the present time, testing in relation to non-MySQL options is ongoing. To use an alternative database system, simply select the option from the drop-down menu during installation. If a database is not present on the list, contact me and I can add it for the next release.
+
+The install script automates almost all steps.
+
+Two additional files are also included.
+
+Note:
+
+install.php will setup the initial configuration and use default path settings based on your system which should be correct. It will also provide a recommended format for your crontab entries! (But remember to leave ONE BLANK LINE at the end of a CRONTAB file prior to installing it as the schedule!)
+
+install_server.php is entered after the config phase and will setup the initial QS database tables and entries. It will also request a password for the Administrator account. This will be the PRIMARY login pass.
+
+game_manager.php is a general game management tool. You can use this to create the first, and further additional games for your server. It also enables deletion of any games. The game creation phase lets you set a specific SECONDARY password for the Administrator account. (It should be noted that prior to the installation of new Quantum Star SE versions, the old games should be deleted first. To retain older games, simply leave as is, and re-add them to the newly created se_games table after installation is complete. There is no guarantee that older games will run well under newer code versions)
+
+Remember that Admins of all games login using the Username "Admin" and the primary password. Each Admin should also be given a secondary password specifically required for each individual game.
+
+Please view the outdated but still very informative HTML Installation Guide for additional information, help and details on how a manual install used to operate.
+
+
+/////////////
+///   2   ///    TOP WEB GAMES LISTING
+/////////////
+
+If you have a listing on www.topwebgames.net you can offer your players incentives to get them to vote.
+
+In your top web games account go to your listing manager for this game and setup incentivising.  Set the method to "post" and the URL to point to your QS: Gen installation at the file twg_vote_return.php.
+
+You can edit that file to determine what the rewards should be. The default is 200 turns if the vote is counted and 100 if it is not (incase they're on a shared connection).  The file will only reward players once per week for voting.
+
+You should also edit the link in the left menu to carry your own TWG account ID (or not if you want to bump my votes ;o) )
+
+
+/////////////
+///   3   ///    TROUBLESHOOTING
+/////////////
+
+1. The install.php script refuses to create the configuration file: config.inc.php
+
+ANS: An example script exists in the /docs/ folder. Edit the values and save to the location /includes/config/config.inc.php. You will have to create the /config/ folder if not already existing. You can also try altering the permissions for the /includes/ folder so the script may write to this folder - just remember to switch permission back to a safer setting so the file's data cannot be stolen from online users.
+
+
+2. The maps for the game are not being created
+
+ANS: Ensure that the PHP GD extension is installed - see the HTML Install Guide of March 2003. Also ensure that Quantum Star SE can write to your /maps/ folder - make it writable if needed. All maps are stored to a folder in /maps/ named for the database prefix you set at game creation.
+
+
+3. I keep getting an error about ADOnewconnection() not being defined.
+
+ANS: QS uses the Database Abstraction Layer - ADOdb 4.0.3. Please try editing /includes/db_funcs.inc.php so that the line with the include() function reads:
+
+include("/PATH/TO/includes/adodb/adodb.inc.php");
+
+Check the full path from root (/) leads to the file located at /includes/adodb/adodb.inc.php
+
+
+4. Feel more problems should be added here? Or was an answer not found in the above? Visit the Quantum Star SE Support Forums at http://www.quantum-star.com .
+
+
+
+
+Thank you for using Quantum Star Generations 0.7.2
+You may contact me with any bug reports at http://forums.quantum-star.com or post them to my tracker at http://webgames.servegame.com/bugtracker.
+
+NOTE: I WILL NOT HELP TROUBLESHOOT YOUR MODIFICATIONS.  ONLY BUGS IN THE CORE RELEASE WILL BE DEALT WITH.
+
+Or visit the Quantum Star Support website and forums at http://www.quantum-star.com

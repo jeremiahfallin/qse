@@ -1,0 +1,69 @@
+<?php
+/*
+A script for creating the db_vars_inc file.
+This script can be used stand-alone (password in password.php), or by way of direct calling.
+Created:
+By: Jonathan "Moriarty"
+On: 14/4/03
+*/
+
+//Get the db connectivity details, as well as game_dir.
+require_once("common.inc.php");
+
+
+$db = db_connect($database_host, $database_user, $database_password, $database, $database_persistent);
+
+db(__FILE__,__LINE__,"select * from ${db_name}_users where login_id = '$login_id'");
+$user = dbr();
+
+//initial error checking, and security measures
+if($user[login_id] != 1 || $var_source != 0) {
+	echo "Access Denied to user on IP ".$REMOTE_ADDR;
+	exit;
+}
+
+//ensure a DB has been selected
+if(!isset($db_name)){
+	echo "No database was selected.<form action=$PHP_SELF method=post><input type=hidden name=pass value=$pass><br /> Database: <input type=text name=db_name><p><input type=submit></form>";
+	exit;
+}
+
+//location of the file in relation to the games directory.
+$file_loc = "$map_path/$db_name/db_vars.inc.php";
+
+//open a stream
+$stream = @fopen($file_loc, "w");
+
+//ensure a stream could be created
+if(empty($stream)){
+	echo "Unable to create db_vars.inc.php in the specified location.<p>Ensure you have the necassary permissions, and that the sub-directory $db_name does exist in the Maps directory.";
+	exit;
+
+//extra error checking.
+} elseif (!is_writable($file_loc)) {
+	echo "Unable to write to the specified file for some reason. Ensure permissions are valid.";
+	exit;
+}
+
+
+
+//start the output string
+$output_str = "<?php\n//Database: $db_name, ".date("F j, Y, g:i:s a")."\n\n";
+
+
+//do the DB stuff
+$db = db_connect($database_host, $database_user, $database_password, $database, $database_persistent);
+db(__FILE__,__LINE__,"select name, value from ${db_name}_db_vars order by name");
+while($db_var = dbr()){
+	$output_str .= "\$$db_var[name] = '$db_var[value]';\n";
+}
+
+
+//output the final file
+if(!fwrite($stream, $output_str."?>")){
+	echo "For some reason the file could not be written to. Ensure permissions are valid.";
+} else {
+	echo "Variables successfully created for Database <b>$db_name</b>";
+}
+
+?>

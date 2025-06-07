@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<!--
+Title:			Shadows Rising RPG "Install Default" Theme
+Designed by:	Maugrim The Reaper (http://www.quantum-star.com)
+Compliance:		XHTML 1.1
+Optimisation:	1024x768 Resolution // Mozilla Firefox 0.8
+-->
+
+<!--Using UTF-8 as <?xml?> declaration missing to avoid IE "quirks" mode rendering. Do not remove !DOCTYPE. Ensure document is fully validated before implementing.-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>{$app_name} Install Utility :: Game Tables Installation</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="language" content="en" />
+<link rel="stylesheet" href="themes/Default/style_default.css" type="text/css" />
+</head>
+
+<body id="default_body">
+
+<div id="pagetop_logo">
+	<img src="../qsgen.gif" alt="{$code_base}"/>
+</div>
+
+<table cellspacing="0" class="invisible">
+<tr>
+<td id="page_leftpanel" style="text-align: left;">
+<!--This is the left side panel, for installation this is just a spacer-->
+
+
+
+
+<div>
+<br /><br /><br /><br />
+<ol>
+<li><a href="game_manager.php">Delete/Create Check</a></li>
+<li><a href="game_manager.php?install_step=3">Game Creation Options</a></li>
+<li style="font-weight: bold; color: lightgreen;">Install Game Database Tables</li>
+</ol>
+</div>
+
+
+
+
+<!--This is the end of the left side panel-->
+</td>
+<td id="page_centerpanel">
+<!--This is the center panel where user actions, text, and menus will appear-->
+
+<p class="h4">{$app_name} Game Manager</p>
+
+<p>
+The database tables for the &quot;Game Tables&quot; component of {$app_name} will now be installed.
+</p>
+<p>
+Below you will see a list of each query executed, with a short status message. If an error occurs, please take note of the error message which will allow you to fix the problem caused by one of the SQL files in the &quot;/sql/mysql&quot; or &quot;/sql/postgres&quot; (depending on your DBMS) directory of {$app_name}. If you are unable to fix the problem yourself - then post the entire error message on the {$app_name} Forums. Chances are any such fundamental errors will have been detected and a fix provided on these forums within hours of the current release!
+<p>
