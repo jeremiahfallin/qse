@@ -1,11 +1,24 @@
+// nextjs-app/src/app/page.tsx
+'use client'; // Required for hooks and event handlers
+
 import Image from "next/image";
+import { useTheme } from '@/components/ThemeProvider'; // Or '../components/ThemeProvider'
+import { Button } from '@radix-ui/themes'; // Optional: Use Radix Button for styling
 
 export default function Home() {
+  const { appearance, toggleAppearance } = useTheme();
+
   return (
     <div>
+      <header style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <Button onClick={toggleAppearance}>
+          Toggle to {appearance === 'light' ? 'Dark' : 'Light'} Mode
+        </Button>
+      </header>
       <main>
+        {/* ... rest of the page content from the original file ... */}
         <Image
-          className="dark:invert"
+          className="dark:invert" // This class might now work as expected with Radix theming
           src="/next.svg"
           alt="Next.js logo"
           width={180}
@@ -28,7 +41,7 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             <Image
-              className="dark:invert"
+              className="dark:invert" // This class might now work as expected
               src="/vercel.svg"
               alt="Vercel logomark"
               width={20}
