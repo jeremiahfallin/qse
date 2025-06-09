@@ -1,0 +1,672 @@
+// datasource db defines the database connection details.
+datasource db {
+  provider = "sqlite" // Specifies the database provider (SQLite in this case).
+  url      = env("DATABASE_URL") // Sets the database connection URL from an environment variable.
+}
+
+// generator client defines how the Prisma Client is generated.
+generator client {
+  provider = "prisma-client-js" // Specifies that Prisma Client for JavaScript should be generated.
+}
+
+// Represents administrative settings for ships.
+model AdminShip {
+  ship_type_id Int     @id @unique // Unique identifier for the ship type.
+  status       Boolean @default(true) // Status of the ship type (e.g., active/inactive).
+  // ship_type    ShipType @relation(fields: [ship_type_id], references: [type_id]) // Relation to ShipType model (assuming ShipType model and type_id field exist)
+}
+
+// Represents a user's bank account information.
+model BankAccount {
+  login_id Int  @id // Unique identifier for the login, also primary key.
+  loan     Int  @default(0) // Amount of loan taken by the user.
+  deposit  Int  @default(0) // Amount of deposit made by the user.
+  // user     User @relation(fields: [login_id], references: [login_id]) // Relation to the User model.
+}
+
+// Represents items available in Bilko's market.
+model Bilko {
+  item_id     Int     @id @default(autoincrement()) // Unique identifier for the item.
+  item_name   String  @default("") // Name of the item.
+  item_code   String  @default("") // Code of the item.
+  item_type   Int     @default(0) // Type of the item.
+  bidder_id   Int     @default(0) // Identifier of the current highest bidder.
+  // bidder      User    @relation("BilkoBids", fields: [bidder_id], references: [login_id]) // Relation to the User who is the bidder
+  going_price Int     @default(0) // Current highest bid price.
+  timestamp   Int     @default(0) // Timestamp of the last bid.
+  active      Boolean @default(false) // Whether the item is currently active for bidding.
+  descr       String  @default("") // Description of the item.
+}
+
+// Represents power-ups in the game.
+model Powerup {
+  id            Int     @id @default(autoincrement()) // Unique identifier for the power-up.
+  name          String  @default("Junk") // Name of the power-up.
+  amount        BigInt  @default(0) // Amount or quantity of the power-up.
+  type          String  @default("cash") // Type of the power-up (e.g., cash, item).
+  table         String  @default("users") // Table associated with the power-up.
+  user_relation String  @default("login_id") // User relation field.
+  location      BigInt  @default(0) // Location identifier for the power-up.
+  desc          String  @default("Looks like you found useless junk, too bad.") // Description of the power-up.
+}
+
+// Represents black markets in the game.
+model Bmrkt {
+  bmrkt_id      Int     @id @default(autoincrement()) // Unique identifier for the black market.
+  location      Int     @default(0) // Location of the black market (references a Star system).
+  // star          Star    @relation(fields: [location], references: [star_id])
+  tech_variance Int     @default(0) // Variance in technology level.
+  bmrkt_type    Int     @default(0) // Type of the black market.
+  bm_name       String  @default("") // Name of the black market.
+  bm_move       Int     @default(1) // Movement points associated with the black market.
+}
+
+// Represents messages in a clan forum.
+model ClanForumMessage {
+  message_id  Int    @id @default(autoincrement()) // Unique identifier for the message.
+  sender_name String @default("") // Name of the sender.
+  timestamp   Int    @default(0) // Timestamp of when the message was sent.
+  login_id    Int    @default(0) // Login ID of the sender.
+  // sender      User   @relation("ClanForumSender", fields: [login_id], references: [login_id])
+  clan_id     Int    @default(0) // ID of the clan the forum belongs to.
+  // clan        Clan   @relation(fields: [clan_id], references: [clan_id])
+  subject     String @default("") // Subject of the message.
+  text        Bytes // Content of the message.
+  sender_id   Int    @default(1) // Sender ID (alternative identifier).
+  reply_to    Int    @default(0) // ID of the message this is a reply to.
+  // repliedMessage ClanForumMessage? @relation("Replies", fields: [reply_to], references: [message_id], onDelete: NoAction, onUpdate: NoAction)
+  // replies        ClanForumMessage[] @relation("Replies")
+}
+
+// Represents relationships between clans (e.g., alliances, wars).
+model ClanRelation {
+  relation_id Int     @id @default(autoincrement()) @unique // Unique identifier for the relation.
+  clan_id     Int     @default(0) // ID of the first clan.
+  // clan1       Clan    @relation("ClanRelations1", fields: [clan_id], references: [clan_id])
+  v_clan_id   Int     @default(0) // ID of the second clan.
+  // clan2       Clan    @relation("ClanRelations2", fields: [v_clan_id], references: [clan_id])
+  nap_agree   Boolean @default(false) // Whether a non-aggression pact is agreed upon.
+  type        Int     @default(0) // Type of the relation.
+}
+
+// Represents clans in the game.
+model Clan {
+  clan_id       Int     @id @default(autoincrement()) // Unique identifier for the clan.
+  clan_name     String  @default("") // Name of the clan.
+  passwd        String  @default("") // Password for the clan (consider hashing).
+  leader_id     Int     @default(0) // Login ID of the clan leader.
+  // leader        User    @relation("ClanLeader", fields: [leader_id], references: [login_id])
+  members       Int     @default(1) // Number of members in the clan.
+  symbol        String  @default("") // Symbol of the clan.
+  sym_color     String  @default("") // Color of the clan symbol.
+  clan_score    Int     @default(0) // Score of the clan.
+  fighter_kills Int     @default(0) // Number of fighter kills by the clan.
+  // forum_messages ClanForumMessage[]
+  // relations1     ClanRelation[]   @relation("ClanRelations1")
+  // relations2     ClanRelation[]   @relation("ClanRelations2")
+  // users          User[] // Users belonging to this clan
+  // fleets         Fleet[] // Fleets belonging to this clan
+  // mines          Mine[] // Mines belonging to this clan
+}
+
+// Represents game database variables and settings.
+model DbVar {
+  type     Int    @default(0) // Type of the variable.
+  name     String @id @default("0") // Name of the variable (primary key).
+  value    String @default("0") // Value of the variable.
+  min      Int    @default(1) // Minimum allowed value.
+  max      Int    @default(1) // Maximum allowed value.
+  descript String // Description of the variable.
+}
+
+// Represents diary entries for users.
+model DiaryEntry {
+  entry_id  Int   @id @default(autoincrement()) @unique // Unique identifier for the diary entry.
+  timestamp Int   @default(0) // Timestamp of the entry.
+  login_id  Int   @default(0) // Login ID of the user who wrote the entry.
+  // user      User  @relation(fields: [login_id], references: [login_id])
+  entry     Bytes // Content of the diary entry.
+  topic     Bytes // Topic of the diary entry.
+
+  @@index([entry_id, timestamp])
+}
+
+// Represents fines imposed on players.
+model Fine {
+  fine_id    Int     @id @default(autoincrement()) @unique // Unique identifier for the fine.
+  login_id   Int     @default(0) // Login ID of the player who received the fine.
+  // user       User    @relation(fields: [login_id], references: [login_id])
+  login_name String  @default("") // Name of the player.
+  amount     Int     @default(0) // Amount of the fine.
+  bounty     Int     @default(0) // Bounty associated with the fine.
+  overdue    Boolean @default(false) // Whether the fine is overdue.
+  paid       Boolean @default(false) // Whether the fine has been paid.
+}
+
+// Represents player fleets.
+model Fleet {
+  fleet_id   Int     @id @default(autoincrement()) // Unique identifier for the fleet.
+  fleet_name String  @default("") // Name of the fleet.
+  fleet_num  Int     @default(0) // Fleet number.
+  login_name String  @default("") // Name of the fleet owner.
+  login_id   Int     @default(0) // Login ID of the fleet owner.
+  // owner      User    @relation("UserFleets", fields: [login_id], references: [login_id])
+  clan_id    Int     @default(0) // Clan ID the fleet belongs to.
+  // clan       Clan?   @relation(fields: [clan_id], references: [clan_id])
+  fleet_link Int     @default(0) // Link to another fleet (if any).
+  location   Int     @default(0) // Current location (star system ID) of the fleet.
+  // star       Star    @relation("FleetsInSystem", fields: [location], references: [star_id])
+  ship_id    Int     @default(0) // ID of the flagship or a representative ship. // This might need clarification, seems like a ship that is PART of the fleet?
+  ramscoop   Int     @default(0) // Ramscoop status/level.
+  scatter    Boolean @default(false) // Whether the fleet is scattered.
+  // ships      Ship[] // Ships belonging to this fleet
+  // upgrades   UpgradeUnit[] // Upgrade units for ships in this fleet
+}
+
+// Represents messages in the global game forum.
+model GameForumMessage {
+  message_id  Int    @id @default(autoincrement()) // Unique identifier for the message.
+  sender_name String @default("") // Name of the sender.
+  timestamp   Int    @default(0) // Timestamp of the message.
+  login_id    Int    @default(0) // Login ID of the sender.
+  // sender      User   @relation("GameForumSender", fields: [login_id], references: [login_id])
+  subject     String @default("") // Subject of the message.
+  text        Bytes // Content of the message.
+  sender_id   Int    @default(1) // Alternative sender ID.
+  clan_id     Int    @default(0) // Clan ID of the sender (if applicable).
+  reply_to    Int    @default(0) // ID of the message this is a reply to.
+  // repliedMessage GameForumMessage? @relation("GameReplies", fields: [reply_to], references: [message_id], onDelete: NoAction, onUpdate: NoAction)
+  // replies        GameForumMessage[] @relation("GameReplies")
+
+  @@index([login_id])
+  @@index([timestamp])
+}
+
+// Represents resource indices for market calculations.
+model Index {
+  index_id Int @id @default(autoincrement()) // Unique identifier for the index record.
+  metal    Int @default(1000) // Metal index value.
+  fuel     Int @default(1000) // Fuel index value.
+  organ    Int @default(1000) // Organics index value.
+  elect    Int @default(1000) // Electronics index value.
+
+  @@index([metal])
+  @@index([fuel])
+  @@index([organ])
+  @@index([elect])
+}
+
+// Represents leech devices deployed by players.
+model Leech {
+  leech_id Int     @id @default(autoincrement()) @unique // Unique identifier for the leech.
+  login_id Int     @default(0) // Login ID of the owner.
+  // owner    User    @relation(fields: [login_id], references: [login_id])
+  task     Int     @default(0) // Task the leech is performing.
+  ship_id  Int     @default(0) // ID of the ship the leech is attached to or deployed from.
+  // ship     Ship    @relation(fields: [ship_id], references: [ship_id])
+  shield   Int     @default(0) // Shield strength of the leech.
+}
+
+// Represents private messages between players.
+model Message {
+  message_id  Int    @id @default(autoincrement()) // Unique identifier for the message.
+  sender_name String @default("") // Name of the sender.
+  timestamp   Int    @default(0) // Timestamp of the message.
+  login_id    Int    @default(0) // Login ID of the recipient.
+  // recipient   User   @relation("ReceivedMessages", fields: [login_id], references: [login_id])
+  text        Bytes // Content of the message.
+  sender_id   Int    @default(1) // Login ID of the sender.
+  // actual_sender User @relation("SentMessages", fields: [sender_id], references: [login_id])
+  clan_id     Int    @default(0) // Clan ID associated with the message (if any).
+  cat         Int    @default(0) // Category of the message.
+
+  @@index([login_id])
+  @@index([timestamp])
+}
+
+// Represents mines laid by players.
+model Mine {
+  mine_id    Int    @id @default(autoincrement()) @unique // Unique identifier for the mine.
+  login_id   Int    @default(0) // Login ID of the owner.
+  // owner      User   @relation(fields: [login_id], references: [login_id])
+  login_name String @default("") // Name of the owner.
+  mine_type  Int    @default(0) // Type of the mine.
+  clan_id    Int    @default(0) // Clan ID of the owner.
+  // clan       Clan?  @relation(fields: [clan_id], references: [clan_id])
+  v_clan_id  Int    @default(0) // ID of a victim clan (if applicable).
+  cluster    Int    @default(0) // Cluster ID the mine belongs to.
+  rel_target Int    @default(0) // Relative target setting.
+  location   Int    @default(0) // Location (star system ID) of the mine.
+  // star       Star   @relation(fields: [location], references: [star_id])
+  sequence   Int    @default(0) // Sequence number for clustered mines.
+}
+
+// Represents Non-Aggression Pacts between entities.
+model Nap {
+  nap_id     Int     @id @default(autoincrement()) @unique // Unique identifier for the NAP.
+  propose_id Int     @default(0) // ID of the proposing entity.
+  accept_id  Int     @default(0) // ID of the accepting entity.
+  prop_time  Int     @default(0) // Timestamp of the proposal.
+  start_time Int     @default(0) // Timestamp when the NAP starts.
+  end_time   Int     @default(0) // Timestamp when the NAP ends.
+  activated  Boolean @default(false) // Whether the NAP is currently active.
+  processed  Boolean @default(false) // Whether the NAP has been processed.
+}
+
+// Represents news headlines in the game.
+model News {
+  news_id   Int    @id @default(autoincrement()) // Unique identifier for the news item.
+  timestamp Int    @default(0) // Timestamp of the news.
+  login_id  Int    @default(0) // Login ID related to the news (e.g., player involved).
+  // user      User?  @relation(fields: [login_id], references: [login_id]) // Optional relation if login_id always refers to a user
+  headline  String // The news headline text.
+
+  @@index([news_id])
+  @@index([timestamp])
+}
+
+// Represents maintenance news headlines.
+model NewsMaint {
+  news_id   Int    @id @default(autoincrement()) // Unique identifier for the maintenance news.
+  timestamp Int    @default(0) // Timestamp of the news.
+  login_id  Int    @default(0) // Login ID related to the news.
+  headline  String // The maintenance news headline.
+
+  @@index([news_id])
+  @@index([timestamp])
+}
+
+// Represents user permissions.
+model Permission {
+  login_id  Int     @id @unique // Login ID of the user (primary key and unique).
+  // user      User?    @relation(fields: [login_id], references: [login_id])
+  god       Boolean @default(false) // God-level permissions.
+  admin     Boolean @default(false) // Administrator permissions.
+  forum     Boolean @default(false) // Forum moderator permissions.
+  developer Boolean @default(false) // Developer permissions.
+}
+
+// Represents planets in the game.
+model Planet {
+  planet_id      Int     @id @default(autoincrement()) // Unique identifier for the planet.
+  planet_name    String  @default("") // Name of the planet.
+  planet_type    Int     @default(0) // Type of the planet.
+  location       Int     @default(0) // Location (star system ID) of the planet.
+  // star           Star    @relation(fields: [location], references: [star_id])
+  owner_id       Int     @default(0) // Login ID of the planet owner.
+  // owner          User?   @relation("PlanetOwner", fields: [owner_id], references: [login_id]) // Can be Nobody
+  owner_name     String  @default("Nobody") // Name of the planet owner.
+  fighters       Int     @default(20) // Number of fighters on the planet.
+  colon          Int     @default(1000) // Number of colonists on the planet.
+  fortress_level Int     @default(0) // Level of the fortress on the planet.
+  fighter_set    Int     @default(0) // Fighter production setting.
+  cash           Int     @default(0) // Cash reserves on the planet.
+  tax_rate       Int     @default(5) // Tax rate on the planet.
+  clan_id        Int     @default(-1) // Clan ID controlling the planet.
+  metal          Int     @default(0) // Metal resources on the planet.
+  fuel           Int     @default(0) // Fuel resources on the planet.
+  elect          Int     @default(0) // Electronics resources on the planet.
+  organ          Int     @default(0) // Organic resources on the planet.
+  alloc_fight    Int     @default(0) // Colonists allocated to fighter production.
+  alloc_elect    Int     @default(0) // Colonists allocated to electronics production.
+  alloc_organ    Int     @default(0) // Colonists allocated to organics production.
+  pass           String  @default("0") // Password for planet access (if any).
+  planet_img     Int? // Image identifier for the planet.
+  shield_gen     Boolean @default(false) // Whether a shield generator is active.
+  shield_charge  Int     @default(0) // Current shield charge of the planet.
+  launch_pad     Float   @default(0) // Level/capacity of the launch pad.
+  missile        Int     @default(0) // Number of missiles on the planet.
+  tech           Int     @default(0) // Technology units on the planet.
+  research_fac   Boolean @default(false) // Whether a research facility exists.
+  darkmatter     Int     @default(0) // Dark matter resources on the planet.
+  wormhole_gen   Boolean @default(false) // Whether a wormhole generator is active.
+  wormhole       Int     @default(0) // Wormhole stability/destination.
+  barren         Boolean @default(false) // Whether the planet is barren.
+  pop_limit      Int     @default(0) // Population limit of the planet.
+  unigen         Boolean @default(false) // Whether the planet was generated during universe creation.
+  super_hostile  Int     @default(0) // Level of super hostility (if applicable).
+
+  @@index([location])
+  @@index([owner_id])
+}
+
+// Represents political positions in the game.
+model Politic {
+  position_id   Int    @id @unique @default(0) // Unique identifier for the political position.
+  position_name String @default("") // Name of the political position.
+  login_id      Int    @default(0) // Login ID of the player holding the position.
+  // holder        User?  @relation("PoliticalHolder", fields: [login_id], references: [login_id]) // Can be no one
+  login_name    String @default("") // Name of the player holding the position.
+  timestamp     Int    @default(0) // Timestamp of when the position was last updated.
+}
+
+// Represents star ports in star systems.
+model Port {
+  port_id   Int @id @default(autoincrement()) // Unique identifier for the port.
+  location  Int @default(0) // Location (star system ID) of the port.
+  // star      Star @relation(fields: [location], references: [star_id])
+  metal     Int @default(0) // Amount of metal available at the port.
+  fuel      Int @default(0) // Amount of fuel available at the port.
+  elect     Int @default(0) // Amount of electronics available at the port.
+  organ     Int @default(0) // Amount of organics available at the port.
+  metal_cap Int @default(0) // Maximum metal capacity of the port.
+  fuel_cap  Int @default(0) // Maximum fuel capacity of the port.
+  elect_cap Int @default(0) // Maximum electronics capacity of the port.
+  organ_cap Int @default(0) // Maximum organics capacity of the port.
+
+  @@index([location])
+}
+
+// Represents game resources and their properties.
+model Resource {
+  resource_id    Int     @id @default(autoincrement()) @unique // Unique identifier for the resource.
+  resource_categ Int     @default(1) // Category of the resource.
+  name           String  @default("Scrap (Unknown Material)") // Name of the resource.
+  sql_name       String  @default("scrap") // SQL table name for the resource.
+  sell_price     Int     @default(0) // Selling price of the resource.
+  cost_price     Int     @default(0) // Cost price of the resource.
+  uv_percent     Int     @default(0) // Percentage chance of appearing during universe generation.
+  uv_max_amount  Int     @default(0) // Maximum amount during universe generation.
+  uv_min_amount  Int     @default(0) // Minimum amount during universe generation.
+  rr_max_chance  Int     @default(0) // Maximum chance for random resource events.
+  rr_min_chance  Int     @default(0) // Minimum chance for random resource events.
+  description    String? // Description of the resource.
+}
+
+// Represents player-owned ships.
+model Ship {
+  ship_id            Int     @id @default(autoincrement()) // Unique identifier for the ship.
+  ship_name          String  @default("") // Name of the ship.
+  login_id           Int     @default(0) // Login ID of the ship owner.
+  // owner              User?   @relation("UserShips", fields: [login_id], references: [login_id]) // A ship might not have an owner (e.g. "Ship Destroyed")
+  login_name         String  @default("Nobody") // Name of the ship owner.
+  clan_id            Int     @default(-1) // Clan ID the ship belongs to.
+  location           Int     @default(1) // Current location (star system ID) of the ship.
+  // star               Star    @relation("ShipsInSystem", fields: [location], references: [star_id])
+  ship_categ         Int     @default(0) // Category of the ship.
+  type               String  @default("0") // Type/class of the ship.
+  shipclass          Int     @default(0) // Ship class identifier.
+  class_name         String  @default("0") // Name of the ship class.
+  class_name_abbr    String  @default("0") // Abbreviation for the ship class name.
+  shields            Int     @default(0) // Current shield strength.
+  max_shields        Int     @default(0) // Maximum shield strength.
+  fighters           Int     @default(0) // Number of fighters on board.
+  max_fighters       Int     @default(0) // Maximum fighter capacity.
+  cargo_bays         Int     @default(0) // Number of cargo bays.
+  metal              Int     @default(0) // Metal cargo.
+  fuel               Int     @default(0) // Fuel cargo.
+  darkmatter         Int     @default(0) // Dark matter cargo.
+  elect              Int     @default(0) // Electronics cargo.
+  organ              Int     @default(0) // Organics cargo.
+  colon              Int     @default(0) // Colonists on board.
+  mine_mode          Int     @default(0) // Mining mode.
+  mine_rate_metal    Int     @default(0) // Metal mining rate.
+  mine_rate_fuel     Int     @default(0) // Fuel mining rate.
+  mine_rate_darkmatter Int   @default(0) // Dark matter mining rate.
+  mine_rate          Int     @default(0) // Overall mining rate.
+  move_turn_cost     Int     @default(1) // Turns required to move.
+  config             String // Ship configuration string.
+  size               Int     @default(1) // Size of the ship.
+  disp_rank          Int     @default(0) // Display rank of the ship.
+  upgrades           Int     @default(0) // Number of upgrades installed.
+  point_value        Int     @default(0) // Point value of the ship for scoring.
+  num_ot             Int     @default(0) // Number of offensive turrets.
+  num_dt             Int     @default(0) // Number of defensive turrets.
+  num_pc             Int     @default(0) // Number of plasma cannons.
+  num_sa             Int     @default(0) // Number of sensor arrays.
+  num_ew             Int     @default(0) // Number of electronic warfare systems.
+  num_mi             Int     @default(0) // Number of missile launchers.
+  tech_bonus         Int     @default(0) // Technology bonus.
+  leech              Boolean @default(false) // Whether the ship has leech capability.
+  missiles           Int     @default(0) // Number of standard missiles.
+  dmissiles          Int     @default(0) // Number of defensive missiles.
+  bonus_attack       Boolean @default(false) // Bonus attack capability.
+  defend_fleet       Boolean @default(false) // Fleet defense capability.
+  shield_1           Int     @default(0) // Shield strength sector 1.
+  shield_2           Int     @default(0) // Shield strength sector 2.
+  shield_3           Int     @default(0) // Shield strength sector 3.
+  shield_4           Int     @default(0) // Shield strength sector 4.
+  shield_5           Int     @default(0) // Shield strength sector 5.
+  shield_charge      Int     @default(0) // Shield charge rate.
+  max_charge         Int     @default(0) // Maximum shield charge.
+  shield_prts        Int     @default(0) // Shield parts.
+  fleet_id           Int     @default(0) // ID of the fleet the ship belongs to.
+  // fleet              Fleet?  @relation(fields: [fleet_id], references: [fleet_id])
+  timestamp          Int     @default(0) // Timestamp of the last update.
+  // leeches            Leech[] // Leeches associated with this ship
+  // upgrade_units      UpgradeUnit[] // Upgrade units installed on this ship
+  // transfer_buffers   TransferBuffer[] // Transfer buffers involving this ship
+
+  @@index([location])
+  @@index([fighters])
+  @@index([fleet_id])
+  @@index([login_id])
+}
+
+// Represents alien shipyards.
+model Shipyard {
+  asyrd_id BigInt @id @default(autoincrement()) // Unique identifier for the alien shipyard.
+  location BigInt @default(0) // Location (star system ID) of the shipyard.
+  // star     Star   @relation(fields: [location], references: [star_id]) // Assuming location is star_id
+  move     BigInt @default(0) // Movement points or similar attribute.
+}
+
+// Represents star systems in the game universe.
+model Star {
+  star_id         Int     @id @default(autoincrement()) // Unique identifier for the star system.
+  star_name       String  @default("") // Name of the star system.
+  sys_type        Int     @default(0) // Type of the star system.
+  x_loc           Int     @default(0) // X-coordinate of the star system on the map.
+  y_loc           Int     @default(0) // Y-coordinate of the star system on the map.
+  link_1          Int     @default(0) // ID of the first linked star system (for warp gates/lanes).
+  link_2          Int     @default(0) // ID of the second linked star system.
+  link_3          Int     @default(0) // ID of the third linked star system.
+  link_4          Int     @default(0) // ID of the fourth linked star system.
+  link_5          Int     @default(0) // ID of the fifth linked star system.
+  link_6          Int     @default(0) // ID of the sixth linked star system.
+  metal           Int     @default(0) // Metal resources in the system.
+  fuel            Int     @default(0) // Fuel resources in the system.
+  darkmatter      Int     @default(0) // Dark matter in the system.
+  planetary_slots Int     @default(0) // Number of available planetary slots.
+  event_random    Int     @default(0) // Random event trigger/status.
+  wormhole        Int     @default(0) // Wormhole presence/destination.
+  art_wh          Int     @default(0) // Artificial wormhole status.
+  wh_login        Int     @default(0) // Login ID associated with the wormhole.
+  wh_clanid       Int     @default(0) // Clan ID associated with the wormhole.
+  unigen          Int     @default(0) // Universe generation marker.
+  t_a             Int     @default(0) // Tactical advantage indicator.
+  // bmrkts          Bmrkt[] // Black markets in this system
+  // fleets_in_system Fleet[] @relation("FleetsInSystem")
+  // mines_in_system  Mine[]
+  // planets_in_system Planet[]
+  // ports_in_system   Port[]
+  // ships_in_system   Ship[]
+  // shipyards_in_system Shipyard[]
+
+  @@index([star_id, star_name])
+}
+
+// Represents a buffer for ship transfers between players.
+model TransferBuffer {
+  buffer_id     Int    @id @default(autoincrement()) @unique // Unique identifier for the buffer entry.
+  owner_id      Int    @default(0) // Login ID of the current owner.
+  // owner         User   @relation("OwnedTransfers", fields: [owner_id], references: [login_id])
+  ship_id       Int    @default(0) // ID of the ship being transferred.
+  // ship          Ship   @relation(fields: [ship_id], references: [ship_id])
+  ship_categ    Int    @default(0) // Category of the ship.
+  class_name    String @default("0") // Class name of the ship.
+  transferto_id Int    @default(0) // Login ID of the recipient.
+  // recipient     User   @relation("ReceivingTransfers", fields: [transferto_id], references: [login_id])
+  timestamp     Int    @default(0) // Timestamp of the transfer initiation.
+}
+
+// Represents upgrade units installed on ships.
+model UpgradeUnit {
+  upg_record          Int @id @default(autoincrement()) @unique // Unique identifier for the upgrade record.
+  ship_id             Int @default(0) // ID of the ship the upgrades are on.
+  // ship                Ship @relation(fields: [ship_id], references: [ship_id])
+  fleet_id            Int @default(0) // ID of the fleet the ship belongs to.
+  // fleet               Fleet? @relation(fields: [fleet_id], references: [fleet_id])
+  login_id            Int @default(0) // Login ID of the owner.
+  // owner               User @relation(fields: [login_id], references: [login_id])
+  clan_id             Int @default(0) // Clan ID of the owner.
+  pass_sensor         Int @default(0) // Passive sensor level.
+  stand_scanner       Int @default(0) // Standard scanner level.
+  adv_scanner         Int @default(0) // Advanced scanner level.
+  grav_scanner        Int @default(0) // Graviton scanner level.
+  subs_array          Int @default(0) // Subspace array level.
+  alien_array         Int @default(0) // Alien array level.
+  stand_cloak         Int @default(0) // Standard cloak level.
+  adv_cloak           Int @default(0) // Advanced cloak level.
+  pir_deflect         Int @default(0) // Pirate deflector level.
+  spat_unit           Int @default(0) // Spatial unit level.
+  dim_flux            Int @default(0) // Dimensional flux level.
+  laser_cannon        Int @default(0) // Laser cannon level.
+  thor_hammer         Int @default(0) // Thor's Hammer level.
+  emp_disruptor       Int @default(0) // EMP disruptor level.
+  plasma_cannon       Int @default(0) // Plasma cannon level.
+  einstein_projector  Int @default(0) // Einstein projector level.
+  laser_ward          Int @default(0) // Laser ward level.
+  flak_cannon         Int @default(0) // Flak cannon level.
+  emp_blaster         Int @default(0) // EMP blaster level.
+  silicon_armour      Int @default(0) // Silicon armour level.
+  shield_charger      Int @default(0) // Shield charger level.
+  wormhole_stabiliser Int @default(0) // Wormhole stabiliser level.
+  trans_drive         Int @default(0) // Trans-dimensional drive level.
+  ramscoop            Int @default(0) // Ramscoop level.
+}
+
+// Represents items available in the used items market.
+model UsedItem {
+  item_id   Int     @id @default(autoincrement()) @unique // Unique identifier for the used item.
+  item_name String  @default("") // Name of the item.
+  item_code String  @default("") // Code of the item.
+  item_type Int     @default(0) // Type of the item.
+  race      Int     @default(0) // Race associated with the item.
+  config    String  @default("") // Configuration string for the item.
+  owner_id  Int     @default(0) // Login ID of the item owner.
+  // owner     User?   @relation(fields: [owner_id], references: [login_id])
+  price     Int     @default(0) // Price of the item.
+  timestamp Int     @default(0) // Timestamp of when the item was listed.
+  active    Boolean @default(false) // Whether the item is actively for sale.
+  ship_id   Int     @default(0) // Ship ID associated with the item (if applicable).
+  ship_type Int     @default(0) // Ship type associated with the item (if applicable).
+  units     Int     @default(0) // Number of units available.
+}
+
+// Represents user-specific options and preferences.
+model UserOption {
+  login_id              Int     @id @unique // Login ID of the user (primary key).
+  // user                  User?    @relation(fields: [login_id], references: [login_id])
+  color_scheme          Int     @default(1) // Preferred color scheme.
+  theme                 String  @default("red_Tempest") // Preferred theme.
+  news_back             Int     @default(200) // News display setting.
+  forum_back            Int     @default(48) // Forum display setting.
+  show_sigs             Boolean @default(true) // Whether to show signatures in forums.
+  show_pics             Boolean @default(true) // Whether to show pictures.
+  show_minimap          Boolean @default(true) // Whether to show the minimap.
+  allow_popups          Boolean @default(true) // Whether to allow popups.
+  show_config           Boolean @default(false) // Whether to show configuration details.
+  show_aim              Boolean @default(false) // AIM display setting.
+  show_icq              Boolean @default(false) // ICQ display setting.
+  planet_report         Boolean @default(true) // Planet report setting.
+  show_clan_ships       Boolean @default(true) // Whether to show clan ships.
+  show_abbr_ship_class  Boolean @default(true) // Whether to show abbreviated ship classes.
+  show_rel_sym          Boolean @default(true) // Whether to show relation symbols.
+  enable_fleets         Boolean @default(true) // Whether to enable fleet functionality.
+  Status_Hidden         Boolean @default(false) // Whether user status is hidden.
+}
+
+// Represents users in the game.
+model User {
+  login_id               Int      @id @default(autoincrement()) // Unique identifier for the user.
+  login_name             String   @unique @default("") // Unique login name of the user.
+  race                   Int      @default(0) // Race of the user.
+  joined_game            Int      @default(0) // Timestamp of when the user joined the game.
+  game_login_count       Int      @default(0) // Number of times the user has logged in.
+  turns                  Int      @default(40) // Current number of turns the user has.
+  turns_run              Int      @default(0) // Total turns run by the user.
+  location               Int      @default(1) // Current location (star system ID) of the user.
+  // current_star         Star     @relation(fields: [location], references: [star_id])
+  ship_id                Int      @default(1) // ID of the user's current ship.
+  cash                   BigInt   @default(100000) // Amount of cash the user has.
+  tech                   Int      @default(0) // Technology level of the user.
+  on_planet              Int      @default(0) // ID of the planet the user is currently on (0 if not on a planet).
+  last_attack            Int      @default(1) // Timestamp of the user's last attack.
+  last_attack_by         String   @default("") // Name of the last attacker.
+  ships_killed           Int      @default(0) // Number of ships killed by the user.
+  ships_lost             Int      @default(0) // Number of ships lost by the user.
+  ships_killed_points    Int      @default(0) // Points gained from ships killed.
+  ships_lost_points      Int      @default(0) // Points lost from ships lost.
+  show_enemy_ships       Int      @default(0) // Setting for showing enemy ships.
+  show_user_ships        Int      @default(0) // Setting for showing user's own ships.
+  genesis                Int      @default(0) // Number of genesis devices owned.
+  terra_imploder         Int      @default(0) // Number of terra imploders owned.
+  clan_id                Int      @default(0) // ID of the clan the user belongs to.
+  // clan                   Clan?    @relation(fields: [clan_id], references: [clan_id])
+  clan_sym               String   @default("") // Clan symbol.
+  clan_sym_color         String   @default("") // Clan symbol color.
+  clan_leader            Boolean  @default(false) // Whether the user is a clan leader.
+  v_clan_id              Int      @default(0) // Visiting clan ID (if any).
+  nap_id                 Int      @default(0) // Non-Aggression Pact ID (if any).
+  fighters_killed        Int      @default(0) // Number of fighters killed by the user.
+  fighters_lost          Int      @default(0) // Number of fighters lost by the user.
+  bounty                 Int      @default(0) // Bounty on the user.
+  score                  Int      @default(0) // User's score.
+  alien                  Int      @default(0) // Alien interaction status/points.
+  pirate                 Int      @default(0) // Pirate interaction status/points.
+  alpha                  Int      @default(0) // Alpha points/status.
+  gamma                  Int      @default(0) // Gamma points/status.
+  delta                  Boolean  @default(false) // Delta status.
+  sn_effect              Boolean  @default(false) // Supernova effect status.
+  politics               Int      @default(0) // Political alignment/status.
+  sig                    String   @default("") // User's signature for forums.
+  last_request           Int      @default(0) // Timestamp of the user's last request.
+  last_access_forum      Int      @default(0) // Timestamp of last forum access.
+  last_access_clan_forum Int      @default(0) // Timestamp of last clan forum access.
+  last_access_news       Int      @default(0) // Timestamp of last news access.
+  last_access_maint_news Int      @default(0) // Timestamp of last maintenance news access.
+  last_access_inbox      Int      @default(0) // Timestamp of last inbox access.
+  banned_time            Int      @default(0) // Timestamp of when the user was banned (0 if not banned).
+  banned_reason          Bytes // Reason for being banned.
+  one_brob               Boolean  @default(false) // Special status/flag.
+  second_scatter         Boolean  @default(false) // Special status/flag.
+  event                  Boolean  @default(false) // Event participation flag.
+  sideffect              Boolean  @default(false) // Side effect status.
+  grav_mine              Int      @default(0) // Number of graviton mines owned.
+  hornet_mine            Int      @default(0) // Number of hornet mines owned.
+  leech                  Int      @default(0) // Number of leeches owned.
+  tachyon_comm           Int      @default(0) // Tachyon communicator status/level.
+  bm_visit               Int      @default(0) // Black market visit count/status.
+  overdue                Boolean  @default(false) // Overdue payment/fine status.
+  outlaw                 Boolean  @default(false) // Outlaw status.
+  ramscoop               Boolean  @default(false) // Ramscoop usage status.
+  email_address          String // User's email address.
+  last_ss                BigInt // Last screenshot timestamp or similar.
+
+  // bank_account            BankAccount? // Optional: A user might not have a bank account
+  // bilko_bids              Bilko[]          @relation("BilkoBids")
+  // clan_forum_messages     ClanForumMessage[] @relation("ClanForumSender")
+  // diary_entries           DiaryEntry[]
+  // fines                   Fine[]
+  // fleets                  Fleet[]          @relation("UserFleets")
+  // game_forum_messages     GameForumMessage[] @relation("GameForumSender")
+  // leeches_owned           Leech[]
+  // messages_received       Message[]        @relation("ReceivedMessages")
+  // messages_sent           Message[]        @relation("SentMessages")
+  // mines_owned             Mine[]
+  // news_items              News[] // If login_id in News always refers to a user
+  // owned_planets           Planet[]         @relation("PlanetOwner")
+  // political_position      Politic?         @relation("PoliticalHolder")
+  // ships                   Ship[]           @relation("UserShips")
+  // owned_transfers         TransferBuffer[] @relation("OwnedTransfers")
+  // receiving_transfers     TransferBuffer[] @relation("ReceivingTransfers")
+  // upgrades_owned          UpgradeUnit[]
+  // used_items_for_sale     UsedItem[]
+  // user_options            UserOption?
+  // permissions             Permission?
+
+  @@index([login_name])
+  @@index([ships_killed])
+  @@index([turns_run])
+}
