@@ -1,6 +1,6 @@
 // datasource db defines the database connection details.
 datasource db {
-  provider = "sqlite" // Specifies the database provider (SQLite in this case).
+  provider = "mysql" // Specifies the database provider (MySQL in this case).
   url      = env("DATABASE_URL") // Sets the database connection URL from an environment variable.
 }
 
@@ -11,17 +11,17 @@ generator client {
 
 // Represents administrative settings for ships.
 model AdminShip {
-  ship_type_id Int     @id @unique // Unique identifier for the ship type.
-  status       Boolean @default(true) // Status of the ship type (e.g., active/inactive).
-  // ship_type    ShipType @relation(fields: [ship_type_id], references: [type_id]) // Relation to ShipType model (assuming ShipType model and type_id field exist)
+  ship_type_id Int      @id // Unique identifier for the ship type.
+  status       Boolean  @default(true) // Status of the ship type (e.g., active/inactive).
+  ship_type    ShipType @relation(fields: [ship_type_id], references: [type_id]) // Relation to ShipType model
 }
 
 // Represents a user's bank account information.
 model BankAccount {
-  login_id Int  @id // Unique identifier for the login, also primary key.
-  loan     Int  @default(0) // Amount of loan taken by the user.
-  deposit  Int  @default(0) // Amount of deposit made by the user.
-  // user     User @relation(fields: [login_id], references: [login_id]) // Relation to the User model.
+  login_id Int         @id // Unique identifier for the login, also primary key.
+  loan     Int         @default(0) // Amount of loan taken by the user.
+  deposit  Int         @default(0) // Amount of deposit made by the user.
+  user     UserAccount @relation(fields: [login_id], references: [login_id]) // Relation to the UserAccount model.
 }
 
 // Represents items available in Bilko's market.
@@ -30,12 +30,12 @@ model Bilko {
   item_name   String  @default("") // Name of the item.
   item_code   String  @default("") // Code of the item.
   item_type   Int     @default(0) // Type of the item.
-  bidder_id   Int     @default(0) // Identifier of the current highest bidder.
-  // bidder      User    @relation("BilkoBids", fields: [bidder_id], references: [login_id]) // Relation to the User who is the bidder
+  bidder_id   Int? // Identifier of the current highest bidder. SQL: int(11) NOT NULL default '0'. Nullable if 0 means no bidder.
+  bidder      User?   @relation("BilkoBids", fields: [bidder_id], references: [login_id]) // Relation to the User who is the bidder
   going_price Int     @default(0) // Current highest bid price.
   timestamp   Int     @default(0) // Timestamp of the last bid.
-  active      Boolean @default(false) // Whether the item is currently active for bidding.
-  descr       String  @default("") // Description of the item.
+  active      Boolean @default(false) // SQL: tinyint(4) NOT NULL default '0'.
+  descr       String  @default("") @db.Text // SQL: text NOT NULL
 }
 
 // Represents power-ups in the game.
@@ -54,9 +54,9 @@ model Powerup {
 model Bmrkt {
   bmrkt_id      Int     @id @default(autoincrement()) // Unique identifier for the black market.
   location      Int     @default(0) // Location of the black market (references a Star system).
-  // star          Star    @relation(fields: [location], references: [star_id])
+  star          Star    @relation("BmrktInStar", fields: [location], references: [star_id])
   tech_variance Int     @default(0) // Variance in technology level.
-  bmrkt_type    Int     @default(0) // Type of the black market.
+  bmrkt_type    Int     @default(0) @db.TinyInt // SQL: tinyint(4) NOT NULL default '0'
   bm_name       String  @default("") // Name of the black market.
   bm_move       Int     @default(1) // Movement points associated with the black market.
 }
@@ -66,47 +66,50 @@ model ClanForumMessage {
   message_id  Int    @id @default(autoincrement()) // Unique identifier for the message.
   sender_name String @default("") // Name of the sender.
   timestamp   Int    @default(0) // Timestamp of when the message was sent.
-  login_id    Int    @default(0) // Login ID of the sender.
-  // sender      User   @relation("ClanForumSender", fields: [login_id], references: [login_id])
-  clan_id     Int    @default(0) // ID of the clan the forum belongs to.
-  // clan        Clan   @relation(fields: [clan_id], references: [clan_id])
-  subject     String @default("") // Subject of the message.
-  text        Bytes // Content of the message.
-  sender_id   Int    @default(1) // Sender ID (alternative identifier).
-  reply_to    Int    @default(0) // ID of the message this is a reply to.
+  login_id    Int    // Login ID of the sender.
+  sender      User   @relation("ClanForumSender", fields: [login_id], references: [login_id])
+  clan_id     Int    @db.UnsignedInt // ID of the clan the forum belongs to.
+  clan        Clan   @relation(fields: [clan_id], references: [clan_id])
+  subject     String @default("") @db.VarChar(50)
+  text        String @db.Text // Content of the message. SQL: blob NOT NULL, assumed text
+  sender_id   Int    @default(1) @db.UnsignedInt // Sender ID (alternative identifier).  //This might be a duplicate of login_id or refer to UserAccount
+  reply_to    Int    @default(0) @db.UnsignedInt // ID of the message this is a reply to.
   // repliedMessage ClanForumMessage? @relation("Replies", fields: [reply_to], references: [message_id], onDelete: NoAction, onUpdate: NoAction)
   // replies        ClanForumMessage[] @relation("Replies")
 }
 
 // Represents relationships between clans (e.g., alliances, wars).
 model ClanRelation {
-  relation_id Int     @id @default(autoincrement()) @unique // Unique identifier for the relation.
-  clan_id     Int     @default(0) // ID of the first clan.
-  // clan1       Clan    @relation("ClanRelations1", fields: [clan_id], references: [clan_id])
-  v_clan_id   Int     @default(0) // ID of the second clan.
-  // clan2       Clan    @relation("ClanRelations2", fields: [v_clan_id], references: [clan_id])
-  nap_agree   Boolean @default(false) // Whether a non-aggression pact is agreed upon.
-  type        Int     @default(0) // Type of the relation.
+  relation_id Int     @id @default(autoincrement()) @unique
+  clan_id     Int     // ID of the first clan. SQL: clan_id int(11) NOT NULL default '0'
+  clan1       Clan    @relation("ClanRelations1", fields: [clan_id], references: [clan_id])
+  v_clan_id   Int     // ID of the second clan. SQL: v_clan_id int(11) NOT NULL default '0'
+  clan2       Clan    @relation("ClanRelations2", fields: [v_clan_id], references: [clan_id])
+  nap_agree   Boolean @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  type        Int     @default(0) @db.TinyInt // SQL: type tinyint(4) NOT NULL default '0'
 }
 
 // Represents clans in the game.
 model Clan {
-  clan_id       Int     @id @default(autoincrement()) // Unique identifier for the clan.
-  clan_name     String  @default("") // Name of the clan.
-  passwd        String  @default("") // Password for the clan (consider hashing).
-  leader_id     Int     @default(0) // Login ID of the clan leader.
-  // leader        User    @relation("ClanLeader", fields: [leader_id], references: [login_id])
-  members       Int     @default(1) // Number of members in the clan.
-  symbol        String  @default("") // Symbol of the clan.
-  sym_color     String  @default("") // Color of the clan symbol.
-  clan_score    Int     @default(0) // Score of the clan.
+  clan_id       Int    @id @default(autoincrement()) @db.UnsignedInt
+  clan_name     String @default("") @db.VarChar(30)
+  passwd        String @default("") @db.VarChar(25)
+  leader_id     Int?   // Login ID of the clan leader. SQL: int(11) NOT NULL default '0'. Made nullable if 0 means no leader.
+  leader        User?  @relation("ClanLeader", fields: [leader_id], references: [login_id])
+  members       Int    @default(1)
+  symbol        String @default("") @db.Char(3)
+  sym_color     String @default("") @db.VarChar(6)
+  clan_score    Int    @default(0)
   fighter_kills Int     @default(0) // Number of fighter kills by the clan.
   // forum_messages ClanForumMessage[]
-  // relations1     ClanRelation[]   @relation("ClanRelations1")
-  // relations2     ClanRelation[]   @relation("ClanRelations2")
-  // users          User[] // Users belonging to this clan
-  // fleets         Fleet[] // Fleets belonging to this clan
-  // mines          Mine[] // Mines belonging to this clan
+  relations1     ClanRelation[]   @relation("ClanRelations1")
+  relations2     ClanRelation[]   @relation("ClanRelations2")
+  // users          User[] // This relation is managed from User.clan
+  fleets         Fleet[]          @relation("ClanFleets")
+  mines          Mine[]           @relation("ClanMines")
+  forum_messages ClanForumMessage[]
+  ships          Ship[]           @relation("ClanShips") // Added inverse relation
+  upgrade_records UpgradeUnit[]    @relation("ClanUpgradeRecords")
 }
 
 // Represents game database variables and settings.
@@ -122,11 +125,11 @@ model DbVar {
 // Represents diary entries for users.
 model DiaryEntry {
   entry_id  Int   @id @default(autoincrement()) @unique // Unique identifier for the diary entry.
-  timestamp Int   @default(0) // Timestamp of the entry.
-  login_id  Int   @default(0) // Login ID of the user who wrote the entry.
-  // user      User  @relation(fields: [login_id], references: [login_id])
-  entry     Bytes // Content of the diary entry.
-  topic     Bytes // Topic of the diary entry.
+  timestamp Int    @default(0) // Timestamp of the entry.
+  login_id  Int    // Login ID of the user who wrote the entry.
+  user      User   @relation("UserDiaryEntries", fields: [login_id], references: [login_id])
+  entry     String @db.Text // Content of the diary entry. SQL: blob NOT NULL
+  topic     String @db.Text // Topic of the diary entry. SQL: blob NOT NULL
 
   @@index([entry_id, timestamp])
 }
@@ -134,9 +137,9 @@ model DiaryEntry {
 // Represents fines imposed on players.
 model Fine {
   fine_id    Int     @id @default(autoincrement()) @unique // Unique identifier for the fine.
-  login_id   Int     @default(0) // Login ID of the player who received the fine.
-  // user       User    @relation(fields: [login_id], references: [login_id])
-  login_name String  @default("") // Name of the player.
+  login_id   Int     // Login ID of the player who received the fine.
+  user       User    @relation("UserFines", fields: [login_id], references: [login_id])
+  login_name String  @default("") @db.VarChar(30) // SQL: varchar(30) NOT NULL default ''
   amount     Int     @default(0) // Amount of the fine.
   bounty     Int     @default(0) // Bounty associated with the fine.
   overdue    Boolean @default(false) // Whether the fine is overdue.
@@ -147,35 +150,35 @@ model Fine {
 model Fleet {
   fleet_id   Int     @id @default(autoincrement()) // Unique identifier for the fleet.
   fleet_name String  @default("") // Name of the fleet.
-  fleet_num  Int     @default(0) // Fleet number.
-  login_name String  @default("") // Name of the fleet owner.
-  login_id   Int     @default(0) // Login ID of the fleet owner.
-  // owner      User    @relation("UserFleets", fields: [login_id], references: [login_id])
-  clan_id    Int     @default(0) // Clan ID the fleet belongs to.
-  // clan       Clan?   @relation(fields: [clan_id], references: [clan_id])
-  fleet_link Int     @default(0) // Link to another fleet (if any).
-  location   Int     @default(0) // Current location (star system ID) of the fleet.
-  // star       Star    @relation("FleetsInSystem", fields: [location], references: [star_id])
-  ship_id    Int     @default(0) // ID of the flagship or a representative ship. // This might need clarification, seems like a ship that is PART of the fleet?
-  ramscoop   Int     @default(0) // Ramscoop status/level.
-  scatter    Boolean @default(false) // Whether the fleet is scattered.
-  // ships      Ship[] // Ships belonging to this fleet
-  // upgrades   UpgradeUnit[] // Upgrade units for ships in this fleet
+  fleet_num  Int     @default(0) @db.UnsignedInt
+  login_name String  @default("") @db.VarChar(30)
+  login_id   Int     @db.UnsignedInt // Login ID of the fleet owner.
+  owner      User    @relation("UserFleets", fields: [login_id], references: [login_id])
+  clan_id    Int?    @db.UnsignedInt // Clan ID the fleet belongs to. clan_id = 0 means no clan.
+  clan       Clan?   @relation("ClanFleets", fields: [clan_id], references: [clan_id])
+  fleet_link Int     @default(0) @db.UnsignedInt
+  location   Int     @default(0) @db.UnsignedInt // Current location (star system ID) of the fleet.
+  star       Star    @relation("FleetsInSystem", fields: [location], references: [star_id])
+  ship_id    Int     @default(0) @db.UnsignedInt // ID of the flagship or a representative ship.
+  ramscoop   Int     @default(0) @db.UnsignedInt
+  scatter    Boolean @default(false) @db.TinyInt // SQL: tinyint(1) unsigned NOT NULL default '0'
+  ships      Ship[]  @relation("ShipsInFleet") // Ships belonging to this fleet
+  upgrades   UpgradeUnit[] @relation("FleetUpgradesCache")// Upgrade units for ships in this fleet
 }
 
 // Represents messages in the global game forum.
 model GameForumMessage {
   message_id  Int    @id @default(autoincrement()) // Unique identifier for the message.
   sender_name String @default("") // Name of the sender.
-  timestamp   Int    @default(0) // Timestamp of the message.
-  login_id    Int    @default(0) // Login ID of the sender.
-  // sender      User   @relation("GameForumSender", fields: [login_id], references: [login_id])
-  subject     String @default("") // Subject of the message.
-  text        Bytes // Content of the message.
-  sender_id   Int    @default(1) // Alternative sender ID.
-  clan_id     Int    @default(0) // Clan ID of the sender (if applicable).
-  reply_to    Int    @default(0) // ID of the message this is a reply to.
-  // repliedMessage GameForumMessage? @relation("GameReplies", fields: [reply_to], references: [message_id], onDelete: NoAction, onUpdate: NoAction)
+  timestamp   Int    @default(0) @db.UnsignedInt
+  login_id    Int    @db.UnsignedInt // Login ID of the sender. SQL: login_id int(11) unsigned NOT NULL default '0'
+  sender      User   @relation("UserGameForumMessages", fields: [login_id], references: [login_id])
+  subject     String @default("") @db.VarChar(50)
+  text        String @db.Text // Content of the message. SQL: blob NOT NULL, assumed text
+  sender_id   Int    @default(1) @db.UnsignedInt // Alternative sender ID. SQL: sender_id int(11) unsigned NOT NULL default '1'
+  clan_id     Int    @default(0) @db.UnsignedInt // Clan ID of the sender (if applicable). SQL: clan_id int(11) unsigned NOT NULL default '0'
+  reply_to    Int    @default(0) @db.UnsignedInt // ID of the message this is a reply to. SQL: reply_to int(11) unsigned NOT NULL default '0'
+  // repliedMessage GameForumMessage? @relation("GameReplies", fields: [reply_to], references: [message_id], onDelete: NoAction, onUpdate: NoAction) // This relation needs a list on the other side
   // replies        GameForumMessage[] @relation("GameReplies")
 
   @@index([login_id])
@@ -198,13 +201,13 @@ model Index {
 
 // Represents leech devices deployed by players.
 model Leech {
-  leech_id Int     @id @default(autoincrement()) @unique // Unique identifier for the leech.
-  login_id Int     @default(0) // Login ID of the owner.
-  // owner    User    @relation(fields: [login_id], references: [login_id])
-  task     Int     @default(0) // Task the leech is performing.
-  ship_id  Int     @default(0) // ID of the ship the leech is attached to or deployed from.
-  // ship     Ship    @relation(fields: [ship_id], references: [ship_id])
-  shield   Int     @default(0) // Shield strength of the leech.
+  leech_id Int  @id @default(autoincrement()) @unique @db.UnsignedInt // SQL: leech_id int(11) unsigned NOT NULL auto_increment
+  login_id Int  // Login ID of the owner. SQL: login_id int(11) NOT NULL default '0'
+  owner    User @relation("UserLeeches", fields: [login_id], references: [login_id])
+  task     Int  @default(0) @db.TinyInt // Task the leech is performing. SQL: task tinyint(4) NOT NULL default '0'
+  ship_id  Int  // ID of the ship the leech is attached to or deployed from. SQL: ship_id int(11) NOT NULL default '0'
+  ship     Ship @relation("ShipLeeches", fields: [ship_id], references: [ship_id])
+  shield   Int  @default(0) // Shield strength of the leech. SQL: shield int(11) NOT NULL default '0'
 }
 
 // Represents private messages between players.
@@ -213,10 +216,10 @@ model Message {
   sender_name String @default("") // Name of the sender.
   timestamp   Int    @default(0) // Timestamp of the message.
   login_id    Int    @default(0) // Login ID of the recipient.
-  // recipient   User   @relation("ReceivedMessages", fields: [login_id], references: [login_id])
-  text        Bytes // Content of the message.
-  sender_id   Int    @default(1) // Login ID of the sender.
-  // actual_sender User @relation("SentMessages", fields: [sender_id], references: [login_id])
+  recipient   User   @relation("ReceivedMessages", fields: [login_id], references: [login_id]) // login_id is recipient
+  text        Bytes // Content of the message. SQL: blob NOT NULL
+  sender_id   Int    // Login ID of the sender. SQL: sender_id int(11) NOT NULL default '1'
+  actual_sender User @relation("SentMessages", fields: [sender_id], references: [login_id])
   clan_id     Int    @default(0) // Clan ID associated with the message (if any).
   cat         Int    @default(0) // Category of the message.
 
@@ -227,18 +230,18 @@ model Message {
 // Represents mines laid by players.
 model Mine {
   mine_id    Int    @id @default(autoincrement()) @unique // Unique identifier for the mine.
-  login_id   Int    @default(0) // Login ID of the owner.
-  // owner      User   @relation(fields: [login_id], references: [login_id])
-  login_name String @default("") // Name of the owner.
-  mine_type  Int    @default(0) // Type of the mine.
-  clan_id    Int    @default(0) // Clan ID of the owner.
-  // clan       Clan?  @relation(fields: [clan_id], references: [clan_id])
-  v_clan_id  Int    @default(0) // ID of a victim clan (if applicable).
-  cluster    Int    @default(0) // Cluster ID the mine belongs to.
-  rel_target Int    @default(0) // Relative target setting.
-  location   Int    @default(0) // Location (star system ID) of the mine.
-  // star       Star   @relation(fields: [location], references: [star_id])
-  sequence   Int    @default(0) // Sequence number for clustered mines.
+  login_id   Int     // Login ID of the owner. SQL: login_id int(11) NOT NULL default '0'
+  owner      User    @relation("UserMines", fields: [login_id], references: [login_id])
+  login_name String  @default("") @db.VarChar(30) // Name of the owner.
+  mine_type  Int     @default(0) @db.TinyInt // Type of the mine. SQL: tinyint(4) NOT NULL default '0'
+  clan_id    Int?    // Clan ID of the owner. SQL: clan_id int(11) NOT NULL default '0'. Nullable if 0 means no clan.
+  clan       Clan?   @relation("ClanMines", fields: [clan_id], references: [clan_id])
+  v_clan_id  Int     @default(0) // ID of a victim clan (if applicable).
+  cluster    Int     @default(0) // Cluster ID the mine belongs to.
+  rel_target Int     @default(0) @db.TinyInt // SQL: tinyint(4) NOT NULL default '0'
+  location   Int     // Location (star system ID) of the mine. SQL: location int(11) NOT NULL default '0'
+  star       Star    @relation("StarMines", fields: [location], references: [star_id])
+  sequence   Int     @default(0) @db.TinyInt // SQL: tinyint(4) NOT NULL default '0'
 }
 
 // Represents Non-Aggression Pacts between entities.
@@ -257,9 +260,9 @@ model Nap {
 model News {
   news_id   Int    @id @default(autoincrement()) // Unique identifier for the news item.
   timestamp Int    @default(0) // Timestamp of the news.
-  login_id  Int    @default(0) // Login ID related to the news (e.g., player involved).
-  // user      User?  @relation(fields: [login_id], references: [login_id]) // Optional relation if login_id always refers to a user
-  headline  String // The news headline text.
+  login_id  Int    // Login ID related to the news (e.g., player involved). SQL: login_id int(11) NOT NULL default '0'
+  user      User   @relation("UserNews", fields: [login_id], references: [login_id])
+  headline  String @db.Text // The news headline text.
 
   @@index([news_id])
   @@index([timestamp])
@@ -278,10 +281,10 @@ model NewsMaint {
 
 // Represents user permissions.
 model Permission {
-  login_id  Int     @id @unique // Login ID of the user (primary key and unique).
-  // user      User?    @relation(fields: [login_id], references: [login_id])
-  god       Boolean @default(false) // God-level permissions.
-  admin     Boolean @default(false) // Administrator permissions.
+  login_id  Int         @id @unique // Login ID of the user (primary key and unique).
+  user      UserAccount @relation(fields: [login_id], references: [login_id])
+  god       Boolean     @default(false) // God-level permissions.
+  admin     Boolean     @default(false) // Administrator permissions.
   forum     Boolean @default(false) // Forum moderator permissions.
   developer Boolean @default(false) // Developer permissions.
 }
@@ -289,42 +292,42 @@ model Permission {
 // Represents planets in the game.
 model Planet {
   planet_id      Int     @id @default(autoincrement()) // Unique identifier for the planet.
-  planet_name    String  @default("") // Name of the planet.
-  planet_type    Int     @default(0) // Type of the planet.
-  location       Int     @default(0) // Location (star system ID) of the planet.
-  // star           Star    @relation(fields: [location], references: [star_id])
-  owner_id       Int     @default(0) // Login ID of the planet owner.
-  // owner          User?   @relation("PlanetOwner", fields: [owner_id], references: [login_id]) // Can be Nobody
-  owner_name     String  @default("Nobody") // Name of the planet owner.
-  fighters       Int     @default(20) // Number of fighters on the planet.
-  colon          Int     @default(1000) // Number of colonists on the planet.
-  fortress_level Int     @default(0) // Level of the fortress on the planet.
-  fighter_set    Int     @default(0) // Fighter production setting.
-  cash           Int     @default(0) // Cash reserves on the planet.
-  tax_rate       Int     @default(5) // Tax rate on the planet.
+  planet_name    String  @default("") @db.VarChar(30)
+  planet_type    Int     @default(0)
+  location       Int     @default(0) @db.UnsignedInt // Location (star system ID) of the planet.
+  star           Star    @relation("PlanetsInStar", fields: [location], references: [star_id])
+  owner_id       Int?    // Login ID of the planet owner. SQL: owner_id int(11) NOT NULL default '0'. Made nullable if 0 means no owner.
+  owner          User?   @relation("PlanetOwner", fields: [owner_id], references: [login_id]) // Can be Nobody
+  owner_name     String  @default("Nobody") @db.VarChar(30)
+  fighters       Int     @default(20) @db.UnsignedInt
+  colon          Int     @default(1000) @db.UnsignedInt
+  fortress_level Int     @default(0)
+  fighter_set    Int     @default(0)
+  cash           Int     @default(0)
+  tax_rate       Int     @default(5)
   clan_id        Int     @default(-1) // Clan ID controlling the planet.
-  metal          Int     @default(0) // Metal resources on the planet.
-  fuel           Int     @default(0) // Fuel resources on the planet.
-  elect          Int     @default(0) // Electronics resources on the planet.
-  organ          Int     @default(0) // Organic resources on the planet.
-  alloc_fight    Int     @default(0) // Colonists allocated to fighter production.
-  alloc_elect    Int     @default(0) // Colonists allocated to electronics production.
-  alloc_organ    Int     @default(0) // Colonists allocated to organics production.
-  pass           String  @default("0") // Password for planet access (if any).
-  planet_img     Int? // Image identifier for the planet.
-  shield_gen     Boolean @default(false) // Whether a shield generator is active.
-  shield_charge  Int     @default(0) // Current shield charge of the planet.
-  launch_pad     Float   @default(0) // Level/capacity of the launch pad.
-  missile        Int     @default(0) // Number of missiles on the planet.
-  tech           Int     @default(0) // Technology units on the planet.
-  research_fac   Boolean @default(false) // Whether a research facility exists.
-  darkmatter     Int     @default(0) // Dark matter resources on the planet.
-  wormhole_gen   Boolean @default(false) // Whether a wormhole generator is active.
-  wormhole       Int     @default(0) // Wormhole stability/destination.
-  barren         Boolean @default(false) // Whether the planet is barren.
-  pop_limit      Int     @default(0) // Population limit of the planet.
-  unigen         Boolean @default(false) // Whether the planet was generated during universe creation.
-  super_hostile  Int     @default(0) // Level of super hostility (if applicable).
+  metal          Int     @default(0) @db.UnsignedInt
+  fuel           Int     @default(0) @db.UnsignedInt
+  elect          Int     @default(0) @db.UnsignedInt
+  organ          Int     @default(0) @db.UnsignedInt
+  alloc_fight    Int     @default(0)
+  alloc_elect    Int     @default(0)
+  alloc_organ    Int     @default(0)
+  pass           String  @default("0") @db.VarChar(30)
+  planet_img     Int?    @db.TinyInt // SQL: tinyint(255) default NULL
+  shield_gen     Boolean @default(false) // SQL: tinyint(255) NOT NULL default '0'
+  shield_charge  Int     @default(0)
+  launch_pad     Float   @default(0)
+  missile        Int     @default(0)
+  tech           Int     @default(0)
+  research_fac   Boolean @default(false) // SQL: tinyint(255) NOT NULL default '0'
+  darkmatter     Int     @default(0)
+  wormhole_gen   Boolean @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  wormhole       Int     @default(0)
+  barren         Boolean @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  pop_limit      Int     @default(0)
+  unigen         Boolean @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  super_hostile  Int     @default(0)
 
   @@index([location])
   @@index([owner_id])
@@ -332,21 +335,21 @@ model Planet {
 
 // Represents political positions in the game.
 model Politic {
-  position_id   Int    @id @unique @default(0) // Unique identifier for the political position.
-  position_name String @default("") // Name of the political position.
-  login_id      Int    @default(0) // Login ID of the player holding the position.
-  // holder        User?  @relation("PoliticalHolder", fields: [login_id], references: [login_id]) // Can be no one
-  login_name    String @default("") // Name of the player holding the position.
-  timestamp     Int    @default(0) // Timestamp of when the position was last updated.
+  position_id   Int    @id @unique // SQL: position_id int(11) NOT NULL default '0'
+  position_name String @default("") @db.VarChar(30)
+  login_id      Int?   // Login ID of the player holding the position. SQL: login_id int(11) NOT NULL default '0'. Nullable if 0 means no holder.
+  holder        User?  @relation("PoliticalHolder", fields: [login_id], references: [login_id])
+  login_name    String @default("") @db.VarChar(30)
+  timestamp     Int    @default(0)
 }
 
 // Represents star ports in star systems.
 model Port {
-  port_id   Int @id @default(autoincrement()) // Unique identifier for the port.
-  location  Int @default(0) // Location (star system ID) of the port.
-  // star      Star @relation(fields: [location], references: [star_id])
-  metal     Int @default(0) // Amount of metal available at the port.
-  fuel      Int @default(0) // Amount of fuel available at the port.
+  port_id   Int  @id @default(autoincrement()) // Unique identifier for the port.
+  location  Int  @default(0) // Location (star system ID) of the port.
+  star      Star @relation("PortsInStar", fields: [location], references: [star_id])
+  metal     Int  @default(0) // Amount of metal available at the port.
+  fuel      Int  @default(0) // Amount of fuel available at the port.
   elect     Int @default(0) // Amount of electronics available at the port.
   organ     Int @default(0) // Amount of organics available at the port.
   metal_cap Int @default(0) // Maximum metal capacity of the port.
@@ -377,17 +380,19 @@ model Resource {
 model Ship {
   ship_id            Int     @id @default(autoincrement()) // Unique identifier for the ship.
   ship_name          String  @default("") // Name of the ship.
-  login_id           Int     @default(0) // Login ID of the ship owner.
-  // owner              User?   @relation("UserShips", fields: [login_id], references: [login_id]) // A ship might not have an owner (e.g. "Ship Destroyed")
-  login_name         String  @default("Nobody") // Name of the ship owner.
-  clan_id            Int     @default(-1) // Clan ID the ship belongs to.
+  login_id           Int?    // Login ID of the ship owner. SQL: login_id int(11) NOT NULL default '0'. Nullable if 0 means no owner.
+  owner              User?   @relation("UserShips", fields: [login_id], references: [login_id])
+  login_name         String  @default("Nobody") @db.VarChar(30)
+  clan_id            Int?    // Clan ID the ship belongs to. SQL: clan_id int(11) NOT NULL default '-1'. Nullable.
+  clan               Clan?   @relation("ClanShips", fields: [clan_id], references: [clan_id])
   location           Int     @default(1) // Current location (star system ID) of the ship.
-  // star               Star    @relation("ShipsInSystem", fields: [location], references: [star_id])
-  ship_categ         Int     @default(0) // Category of the ship.
-  type               String  @default("0") // Type/class of the ship.
-  shipclass          Int     @default(0) // Ship class identifier.
-  class_name         String  @default("0") // Name of the ship class.
-  class_name_abbr    String  @default("0") // Abbreviation for the ship class name.
+  star               Star    @relation("ShipsInSystem", fields: [location], references: [star_id])
+  ship_categ         Int     @default(0) @db.TinyInt // SQL: ship_categ tinyint(4) NOT NULL default '0'
+  type               String  @default("0") @db.VarChar(150) // Type/class of the ship. (Denormalized name?) SQL: type varchar(150) NOT NULL default '0'
+  ship_type_id       Int     @default(0) @db.UnsignedInt // Was shipclass. Assumed FK to ShipType.type_id. SQL: shipclass int(11) NOT NULL default '0'
+  ship_type_info     ShipType @relation(fields: [ship_type_id], references: [type_id])
+  class_name         String  @default("0") @db.VarChar(30)
+  class_name_abbr    String  @default("0") @db.VarChar(10)
   shields            Int     @default(0) // Current shield strength.
   max_shields        Int     @default(0) // Maximum shield strength.
   fighters           Int     @default(0) // Number of fighters on board.
@@ -402,12 +407,12 @@ model Ship {
   mine_mode          Int     @default(0) // Mining mode.
   mine_rate_metal    Int     @default(0) // Metal mining rate.
   mine_rate_fuel     Int     @default(0) // Fuel mining rate.
-  mine_rate_darkmatter Int   @default(0) // Dark matter mining rate.
-  mine_rate          Int     @default(0) // Overall mining rate.
-  move_turn_cost     Int     @default(1) // Turns required to move.
-  config             String // Ship configuration string.
-  size               Int     @default(1) // Size of the ship.
-  disp_rank          Int     @default(0) // Display rank of the ship.
+  mine_rate_darkmatter Int   @default(0) @db.UnsignedInt
+  mine_rate          Int     @default(0) @db.UnsignedInt
+  move_turn_cost     Int     @default(1) @db.UnsignedInt
+  config             String  @db.Text // Ship configuration string. SQL: text NOT NULL
+  size               Int     @default(1) @db.TinyInt // SQL: size tinyint(4) NOT NULL default '1'
+  disp_rank          Int     @default(0) @db.TinyInt // SQL: disp_rank tinyint(4) NOT NULL default '0'
   upgrades           Int     @default(0) // Number of upgrades installed.
   point_value        Int     @default(0) // Point value of the ship for scoring.
   num_ot             Int     @default(0) // Number of offensive turrets.
@@ -428,14 +433,15 @@ model Ship {
   shield_4           Int     @default(0) // Shield strength sector 4.
   shield_5           Int     @default(0) // Shield strength sector 5.
   shield_charge      Int     @default(0) // Shield charge rate.
-  max_charge         Int     @default(0) // Maximum shield charge.
-  shield_prts        Int     @default(0) // Shield parts.
-  fleet_id           Int     @default(0) // ID of the fleet the ship belongs to.
-  // fleet              Fleet?  @relation(fields: [fleet_id], references: [fleet_id])
-  timestamp          Int     @default(0) // Timestamp of the last update.
-  // leeches            Leech[] // Leeches associated with this ship
-  // upgrade_units      UpgradeUnit[] // Upgrade units installed on this ship
-  // transfer_buffers   TransferBuffer[] // Transfer buffers involving this ship
+  max_charge         Int     @default(0) @db.UnsignedInt
+  shield_prts        Int     @default(0) @db.UnsignedInt
+  fleet_id           Int?    // ID of the fleet the ship belongs to. SQL: fleet_id int(11) unsigned NOT NULL default '0'. Nullable if 0 means no fleet.
+  fleet              Fleet?  @relation("ShipsInFleet", fields: [fleet_id], references: [fleet_id])
+  timestamp          Int     @default(0) @db.UnsignedInt
+  leeches_on_ship    Leech[]            @relation("ShipLeeches")
+  upgrades_installed UpgradeUnit[]      @relation("ShipUpgrades")
+  transfer_entries   TransferBuffer[]   @relation("ShipTransferEntries")
+
 
   @@index([location])
   @@index([fighters])
@@ -445,10 +451,10 @@ model Ship {
 
 // Represents alien shipyards.
 model Shipyard {
-  asyrd_id BigInt @id @default(autoincrement()) // Unique identifier for the alien shipyard.
-  location BigInt @default(0) // Location (star system ID) of the shipyard.
-  // star     Star   @relation(fields: [location], references: [star_id]) // Assuming location is star_id
-  move     BigInt @default(0) // Movement points or similar attribute.
+  asyrd_id BigInt @id @default(autoincrement())
+  location Int    @default(0) // Location (star system ID) of the shipyard. SQL was BigInt, changed to Int to match Star.star_id
+  star     Star   @relation("ShipyardsInStar", fields: [location], references: [star_id])
+  move     BigInt @default(0) // SQL: bigint(255) NOT NULL default '0'
 }
 
 // Represents star systems in the game universe.
@@ -475,91 +481,94 @@ model Star {
   wh_clanid       Int     @default(0) // Clan ID associated with the wormhole.
   unigen          Int     @default(0) // Universe generation marker.
   t_a             Int     @default(0) // Tactical advantage indicator.
-  // bmrkts          Bmrkt[] // Black markets in this system
-  // fleets_in_system Fleet[] @relation("FleetsInSystem")
-  // mines_in_system  Mine[]
-  // planets_in_system Planet[]
-  // ports_in_system   Port[]
-  // ships_in_system   Ship[]
-  // shipyards_in_system Shipyard[]
+  bmrkts            Bmrkt[]            @relation("BmrktInStar")
+  fleets_in_system  Fleet[]            @relation("FleetsInSystem")
+  mines_in_system   Mine[]             @relation("StarMines")
+  planets_in_system Planet[]           @relation("PlanetsInStar")
+  ports_in_system   Port[]             @relation("PortsInStar")
+  ships_in_system   Ship[]             @relation("ShipsInSystem")
+  shipyards_in_system Shipyard[]         @relation("ShipyardsInStar")
+  users_in_system   User[]             @relation("UsersInSystem")
+
 
   @@index([star_id, star_name])
 }
 
 // Represents a buffer for ship transfers between players.
 model TransferBuffer {
-  buffer_id     Int    @id @default(autoincrement()) @unique // Unique identifier for the buffer entry.
-  owner_id      Int    @default(0) // Login ID of the current owner.
-  // owner         User   @relation("OwnedTransfers", fields: [owner_id], references: [login_id])
-  ship_id       Int    @default(0) // ID of the ship being transferred.
-  // ship          Ship   @relation(fields: [ship_id], references: [ship_id])
-  ship_categ    Int    @default(0) // Category of the ship.
-  class_name    String @default("0") // Class name of the ship.
-  transferto_id Int    @default(0) // Login ID of the recipient.
-  // recipient     User   @relation("ReceivingTransfers", fields: [transferto_id], references: [login_id])
-  timestamp     Int    @default(0) // Timestamp of the transfer initiation.
+  buffer_id     Int    @id @default(autoincrement()) @unique @db.UnsignedInt // SQL: buffer_id int(11) unsigned NOT NULL auto_increment
+  owner_id      Int    @db.UnsignedInt // Login ID of the current owner. SQL: owner_id int(11) unsigned NOT NULL default '0'
+  owner         User   @relation("OwnedTransfers", fields: [owner_id], references: [login_id])
+  ship_id       Int    @db.UnsignedInt // ID of the ship being transferred. SQL: ship_id int(11) unsigned NOT NULL default '0'
+  ship          Ship   @relation("ShipTransferEntries", fields: [ship_id], references: [ship_id])
+  ship_categ    Int    @default(0) @db.UnsignedInt // SQL: ship_categ int(11) unsigned NOT NULL default '0'
+  class_name    String @default("0") @db.VarChar(32) // SQL: class_name varchar(32) NOT NULL default '0'
+  transferto_id Int    @db.UnsignedInt // Login ID of the recipient. SQL: transferto_id int(11) unsigned NOT NULL default '0'
+  recipient     User   @relation("ReceivedTransfers", fields: [transferto_id], references: [login_id])
+  timestamp     Int    @default(0) @db.UnsignedInt // SQL: timestamp int(11) unsigned NOT NULL default '0'
 }
 
 // Represents upgrade units installed on ships.
 model UpgradeUnit {
-  upg_record          Int @id @default(autoincrement()) @unique // Unique identifier for the upgrade record.
-  ship_id             Int @default(0) // ID of the ship the upgrades are on.
-  // ship                Ship @relation(fields: [ship_id], references: [ship_id])
-  fleet_id            Int @default(0) // ID of the fleet the ship belongs to.
-  // fleet               Fleet? @relation(fields: [fleet_id], references: [fleet_id])
-  login_id            Int @default(0) // Login ID of the owner.
-  // owner               User @relation(fields: [login_id], references: [login_id])
-  clan_id             Int @default(0) // Clan ID of the owner.
-  pass_sensor         Int @default(0) // Passive sensor level.
-  stand_scanner       Int @default(0) // Standard scanner level.
-  adv_scanner         Int @default(0) // Advanced scanner level.
-  grav_scanner        Int @default(0) // Graviton scanner level.
-  subs_array          Int @default(0) // Subspace array level.
-  alien_array         Int @default(0) // Alien array level.
-  stand_cloak         Int @default(0) // Standard cloak level.
-  adv_cloak           Int @default(0) // Advanced cloak level.
-  pir_deflect         Int @default(0) // Pirate deflector level.
-  spat_unit           Int @default(0) // Spatial unit level.
-  dim_flux            Int @default(0) // Dimensional flux level.
-  laser_cannon        Int @default(0) // Laser cannon level.
-  thor_hammer         Int @default(0) // Thor's Hammer level.
-  emp_disruptor       Int @default(0) // EMP disruptor level.
-  plasma_cannon       Int @default(0) // Plasma cannon level.
-  einstein_projector  Int @default(0) // Einstein projector level.
-  laser_ward          Int @default(0) // Laser ward level.
-  flak_cannon         Int @default(0) // Flak cannon level.
-  emp_blaster         Int @default(0) // EMP blaster level.
-  silicon_armour      Int @default(0) // Silicon armour level.
-  shield_charger      Int @default(0) // Shield charger level.
-  wormhole_stabiliser Int @default(0) // Wormhole stabiliser level.
-  trans_drive         Int @default(0) // Trans-dimensional drive level.
-  ramscoop            Int @default(0) // Ramscoop level.
+  upg_record          Int   @id @default(autoincrement()) @unique @db.UnsignedInt // SQL: upg_record int(11) unsigned NOT NULL auto_increment
+  ship_id             Int   @db.UnsignedInt // ID of the ship the upgrades are on. SQL: ship_id int(11) unsigned NOT NULL default '0'
+  ship                Ship  @relation("ShipUpgrades", fields: [ship_id], references: [ship_id])
+  fleet_id            Int?  @db.UnsignedInt // ID of the fleet the ship belongs to. SQL: fleet_id int(11) unsigned NOT NULL default '0'. Made nullable.
+  fleet               Fleet? @relation("FleetUpgradesCache", fields: [fleet_id], references: [fleet_id])
+  login_id            Int   @db.UnsignedInt // Login ID of the owner. SQL: login_id int(11) unsigned NOT NULL default '0'
+  owner               User  @relation("UserUpgradeRecords", fields: [login_id], references: [login_id])
+  clan_id             Int?  @db.UnsignedInt // Clan ID of the owner. SQL: clan_id int(11) unsigned NOT NULL default '0'. Made nullable.
+  clan                Clan? @relation("ClanUpgradeRecords", fields: [clan_id], references: [clan_id])
+  pass_sensor         Int   @default(0) @db.UnsignedInt
+  stand_scanner       Int   @default(0) @db.UnsignedInt
+  adv_scanner         Int   @default(0) @db.UnsignedInt
+  grav_scanner        Int   @default(0) @db.UnsignedInt
+  subs_array          Int   @default(0) @db.UnsignedInt
+  alien_array         Int   @default(0) @db.UnsignedInt
+  stand_cloak         Int   @default(0) @db.UnsignedInt
+  adv_cloak           Int   @default(0) @db.UnsignedInt
+  pir_deflect         Int   @default(0) @db.UnsignedInt
+  spat_unit           Int   @default(0) @db.UnsignedInt
+  dim_flux            Int   @default(0) @db.UnsignedInt
+  laser_cannon        Int   @default(0) @db.UnsignedInt
+  thor_hammer         Int   @default(0) @db.UnsignedInt
+  emp_disruptor       Int   @default(0) @db.UnsignedInt
+  plasma_cannon       Int   @default(0) @db.UnsignedInt
+  einstein_projector  Int   @default(0) @db.UnsignedInt
+  laser_ward          Int   @default(0) @db.UnsignedInt
+  flak_cannon         Int   @default(0) @db.UnsignedInt
+  emp_blaster         Int   @default(0) @db.UnsignedInt
+  silicon_armour      Int   @default(0) @db.UnsignedInt
+  shield_charger      Int   @default(0) @db.UnsignedInt
+  wormhole_stabiliser Int   @default(0) @db.UnsignedInt
+  trans_drive         Int   @default(0) @db.UnsignedInt
+  ramscoop            Int   @default(0) @db.UnsignedInt
 }
 
 // Represents items available in the used items market.
 model UsedItem {
-  item_id   Int     @id @default(autoincrement()) @unique // Unique identifier for the used item.
-  item_name String  @default("") // Name of the item.
-  item_code String  @default("") // Code of the item.
-  item_type Int     @default(0) // Type of the item.
-  race      Int     @default(0) // Race associated with the item.
-  config    String  @default("") // Configuration string for the item.
-  owner_id  Int     @default(0) // Login ID of the item owner.
-  // owner     User?   @relation(fields: [owner_id], references: [login_id])
-  price     Int     @default(0) // Price of the item.
-  timestamp Int     @default(0) // Timestamp of when the item was listed.
-  active    Boolean @default(false) // Whether the item is actively for sale.
-  ship_id   Int     @default(0) // Ship ID associated with the item (if applicable).
-  ship_type Int     @default(0) // Ship type associated with the item (if applicable).
-  units     Int     @default(0) // Number of units available.
+  item_id   Int     @id @default(autoincrement()) @unique @db.UnsignedInt // SQL: item_id int(11) unsigned NOT NULL auto_increment
+  item_name String  @default("") @db.VarChar(30)
+  item_code String  @default("") @db.VarChar(30)
+  item_type Int     @default(0) @db.UnsignedInt
+  race      Int     @default(0) @db.TinyInt // SQL: race tinyint(4) NOT NULL default '0'
+  config    String  @default("") @db.VarChar(30)
+  owner_id  Int?    @db.UnsignedInt // Login ID of the item owner. SQL: owner_id int(11) unsigned NOT NULL default '0'. Made nullable.
+  owner     User?   @relation("UserUsedItems", fields: [owner_id], references: [login_id])
+  price     Int     @default(0) @db.UnsignedInt
+  timestamp Int     @default(0) @db.UnsignedInt
+  active    Boolean @default(false) // SQL: active tinyint(4) NOT NULL default '0'
+  ship_id   Int     @default(0) @db.UnsignedInt
+  ship_type Int     @default(0) @db.UnsignedInt
+  units     Int     @default(0) @db.UnsignedInt
 }
 
 // Represents user-specific options and preferences.
 model UserOption {
-  login_id              Int     @id @unique // Login ID of the user (primary key).
-  // user                  User?    @relation(fields: [login_id], references: [login_id])
-  color_scheme          Int     @default(1) // Preferred color scheme.
-  theme                 String  @default("red_Tempest") // Preferred theme.
+  login_id              Int         @id @unique // Login ID of the user (primary key).
+  user                  UserAccount @relation("UserAccountOptions", fields: [login_id], references: [login_id])
+  color_scheme          Int         @default(1) // Preferred color scheme.
+  theme                 String      @default("red_Tempest") // Preferred theme.
   news_back             Int     @default(200) // News display setting.
   forum_back            Int     @default(48) // Forum display setting.
   show_sigs             Boolean @default(true) // Whether to show signatures in forums.
@@ -578,95 +587,346 @@ model UserOption {
 }
 
 // Represents users in the game.
+// This model corresponds to QUANTUM_users (game-specific user data)
 model User {
-  login_id               Int      @id @default(autoincrement()) // Unique identifier for the user.
-  login_name             String   @unique @default("") // Unique login name of the user.
-  race                   Int      @default(0) // Race of the user.
-  joined_game            Int      @default(0) // Timestamp of when the user joined the game.
-  game_login_count       Int      @default(0) // Number of times the user has logged in.
-  turns                  Int      @default(40) // Current number of turns the user has.
-  turns_run              Int      @default(0) // Total turns run by the user.
-  location               Int      @default(1) // Current location (star system ID) of the user.
-  // current_star         Star     @relation(fields: [location], references: [star_id])
-  ship_id                Int      @default(1) // ID of the user's current ship.
-  cash                   BigInt   @default(100000) // Amount of cash the user has.
-  tech                   Int      @default(0) // Technology level of the user.
-  on_planet              Int      @default(0) // ID of the planet the user is currently on (0 if not on a planet).
-  last_attack            Int      @default(1) // Timestamp of the user's last attack.
-  last_attack_by         String   @default("") // Name of the last attacker.
-  ships_killed           Int      @default(0) // Number of ships killed by the user.
-  ships_lost             Int      @default(0) // Number of ships lost by the user.
-  ships_killed_points    Int      @default(0) // Points gained from ships killed.
-  ships_lost_points      Int      @default(0) // Points lost from ships lost.
-  show_enemy_ships       Int      @default(0) // Setting for showing enemy ships.
-  show_user_ships        Int      @default(0) // Setting for showing user's own ships.
-  genesis                Int      @default(0) // Number of genesis devices owned.
-  terra_imploder         Int      @default(0) // Number of terra imploders owned.
-  clan_id                Int      @default(0) // ID of the clan the user belongs to.
-  // clan                   Clan?    @relation(fields: [clan_id], references: [clan_id])
-  clan_sym               String   @default("") // Clan symbol.
-  clan_sym_color         String   @default("") // Clan symbol color.
-  clan_leader            Boolean  @default(false) // Whether the user is a clan leader.
-  v_clan_id              Int      @default(0) // Visiting clan ID (if any).
-  nap_id                 Int      @default(0) // Non-Aggression Pact ID (if any).
-  fighters_killed        Int      @default(0) // Number of fighters killed by the user.
-  fighters_lost          Int      @default(0) // Number of fighters lost by the user.
-  bounty                 Int      @default(0) // Bounty on the user.
-  score                  Int      @default(0) // User's score.
-  alien                  Int      @default(0) // Alien interaction status/points.
-  pirate                 Int      @default(0) // Pirate interaction status/points.
-  alpha                  Int      @default(0) // Alpha points/status.
-  gamma                  Int      @default(0) // Gamma points/status.
-  delta                  Boolean  @default(false) // Delta status.
-  sn_effect              Boolean  @default(false) // Supernova effect status.
-  politics               Int      @default(0) // Political alignment/status.
-  sig                    String   @default("") // User's signature for forums.
-  last_request           Int      @default(0) // Timestamp of the user's last request.
-  last_access_forum      Int      @default(0) // Timestamp of last forum access.
-  last_access_clan_forum Int      @default(0) // Timestamp of last clan forum access.
-  last_access_news       Int      @default(0) // Timestamp of last news access.
-  last_access_maint_news Int      @default(0) // Timestamp of last maintenance news access.
-  last_access_inbox      Int      @default(0) // Timestamp of last inbox access.
-  banned_time            Int      @default(0) // Timestamp of when the user was banned (0 if not banned).
-  banned_reason          Bytes // Reason for being banned.
-  one_brob               Boolean  @default(false) // Special status/flag.
-  second_scatter         Boolean  @default(false) // Special status/flag.
-  event                  Boolean  @default(false) // Event participation flag.
-  sideffect              Boolean  @default(false) // Side effect status.
-  grav_mine              Int      @default(0) // Number of graviton mines owned.
-  hornet_mine            Int      @default(0) // Number of hornet mines owned.
-  leech                  Int      @default(0) // Number of leeches owned.
-  tachyon_comm           Int      @default(0) // Tachyon communicator status/level.
-  bm_visit               Int      @default(0) // Black market visit count/status.
-  overdue                Boolean  @default(false) // Overdue payment/fine status.
-  outlaw                 Boolean  @default(false) // Outlaw status.
-  ramscoop               Boolean  @default(false) // Ramscoop usage status.
-  email_address          String // User's email address.
-  last_ss                BigInt // Last screenshot timestamp or similar.
+  login_id               Int         @id @db.UnsignedInt // PK, FK to UserAccount.login_id. NOT auto-increment.
+  user_account           UserAccount @relation("UserAccountGameInstances", fields: [login_id], references: [login_id])
+  login_name             String      @default("") @db.VarChar(120) // Not unique. SQL: login_name varchar(120) NOT NULL default ''
+  race                   Int         @default(0) @db.TinyInt
+  joined_game            Int         @default(0) @db.UnsignedInt
+  game_login_count       Int         @default(0) @db.UnsignedInt
+  turns                  Int         @default(40) @db.UnsignedInt
+  turns_run              Int         @default(0) @db.UnsignedInt
+  location               Int         @default(1) @db.UnsignedInt // Foreign key to Star.star_id
+  current_star           Star?       @relation("UsersInSystem", fields: [location], references: [star_id])
+  ship_id                Int         @default(1) @db.UnsignedInt
+  cash                   BigInt      @default(100000) @db.UnsignedBigInt
+  tech                   Int         @default(0) @db.UnsignedInt
+  on_planet              Int         @default(0) @db.UnsignedInt
+  last_attack            Int         @default(1) @db.UnsignedInt
+  last_attack_by         String      @default("") @db.VarChar(30)
+  ships_killed           Int         @default(0) @db.UnsignedInt
+  ships_lost             Int         @default(0) @db.UnsignedInt
+  ships_killed_points    Int         @default(0) @db.UnsignedInt
+  ships_lost_points      Int         @default(0) @db.UnsignedInt
+  show_enemy_ships       Int         @default(0) @db.UnsignedInt
+  show_user_ships        Int         @default(0) @db.UnsignedInt
+  genesis                Int         @default(0) @db.UnsignedInt
+  terra_imploder         Int         @default(0) @db.UnsignedInt
+  clan_id                Int?        @db.UnsignedInt // SQL: clan_id int(11) unsigned NOT NULL default '0'
+  clan                   Clan?       @relation(fields: [clan_id], references: [clan_id])
+  clan_sym               String      @default("") @db.Char(3)
+  clan_sym_color         String      @default("") @db.VarChar(6)
+  clan_leader            Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  v_clan_id              Int         @default(0) @db.UnsignedInt
+  nap_id                 Int         @default(0) @db.TinyInt // SQL: int(4) NOT NULL default '0'
+  fighters_killed        Int         @default(0) @db.UnsignedInt
+  fighters_lost          Int         @default(0) @db.UnsignedInt
+  bounty                 Int         @default(0) @db.UnsignedInt
+  score                  Int         @default(0) @db.UnsignedInt
+  alien                  Int         @default(0) @db.UnsignedInt
+  pirate                 Int         @default(0) @db.UnsignedInt
+  alpha                  Int         @default(0) @db.UnsignedInt
+  gamma                  Int         @default(0) @db.UnsignedInt
+  delta                  Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  sn_effect              Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  politics               Int         @default(0) @db.UnsignedInt
+  sig                    String      @default("") @db.VarChar(150)
+  last_request           Int         @default(0) @db.UnsignedInt
+  last_access_forum      Int         @default(0) @db.UnsignedInt
+  last_access_clan_forum Int         @default(0) @db.UnsignedInt
+  last_access_news       Int         @default(0) @db.UnsignedInt
+  last_access_maint_news Int         @default(0) @db.UnsignedInt
+  last_access_inbox      Int         @default(0) @db.UnsignedInt
+  banned_time            Int         @default(0) @db.UnsignedInt
+  banned_reason          String      @db.Text // SQL: blob NOT NULL, assumed text
+  one_brob               Boolean     @default(false) // SQL: tinyint(11) unsigned NOT NULL default '0'
+  second_scatter         Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  event                  Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  sideffect              Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  grav_mine              Int         @default(0) @db.UnsignedInt
+  hornet_mine            Int         @default(0) @db.UnsignedInt
+  leech                  Int         @default(0) @db.UnsignedInt
+  tachyon_comm           Int         @default(0) @db.UnsignedInt
+  bm_visit               Int         @default(0) @db.UnsignedInt
+  overdue                Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  outlaw                 Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  ramscoop               Boolean     @default(false) // SQL: tinyint(4) NOT NULL default '0'
+  // email_address field removed, exists in UserAccount
+  last_ss                BigInt      @db.UnsignedBigInt // SQL: bigint(255) NOT NULL
 
-  // bank_account            BankAccount? // Optional: A user might not have a bank account
-  // bilko_bids              Bilko[]          @relation("BilkoBids")
-  // clan_forum_messages     ClanForumMessage[] @relation("ClanForumSender")
-  // diary_entries           DiaryEntry[]
-  // fines                   Fine[]
-  // fleets                  Fleet[]          @relation("UserFleets")
-  // game_forum_messages     GameForumMessage[] @relation("GameForumSender")
-  // leeches_owned           Leech[]
-  // messages_received       Message[]        @relation("ReceivedMessages")
-  // messages_sent           Message[]        @relation("SentMessages")
-  // mines_owned             Mine[]
-  // news_items              News[] // If login_id in News always refers to a user
-  // owned_planets           Planet[]         @relation("PlanetOwner")
-  // political_position      Politic?         @relation("PoliticalHolder")
-  // ships                   Ship[]           @relation("UserShips")
-  // owned_transfers         TransferBuffer[] @relation("OwnedTransfers")
-  // receiving_transfers     TransferBuffer[] @relation("ReceivingTransfers")
-  // upgrades_owned          UpgradeUnit[]
-  // used_items_for_sale     UsedItem[]
-  // user_options            UserOption?
-  // permissions             Permission?
+  // bank_account should be on UserAccount
+  bilko_bids              Bilko[]            @relation("BilkoBids")
+  clan_forum_messages     ClanForumMessage[] @relation("ClanForumSender")
+  diary_entries           DiaryEntry[]       @relation("UserDiaryEntries")
+  fines                   Fine[]             @relation("UserFines")
+  fleets                  Fleet[]            @relation("UserFleets")
+  game_forum_messages     GameForumMessage[] @relation("UserGameForumMessages")
+  leeches_owned           Leech[]            @relation("UserLeeches")
+  messages_received       Message[]          @relation("ReceivedMessages")
+  messages_sent           Message[]          @relation("SentMessages")
+  mines_owned             Mine[]             @relation("UserMines")
+  news_items              News[]             @relation("UserNews")
+  owned_planets           Planet[]           @relation("PlanetOwner")
+  political_position      Politic?           @relation("PoliticalHolder")
+  ships                   Ship[]             @relation("UserShips")
+  owned_transfers         TransferBuffer[]   @relation("OwnedTransfers")
+  receiving_transfers     TransferBuffer[]   @relation("ReceivedTransfers")
+  upgrade_records         UpgradeUnit[]      @relation("UserUpgradeRecords")
+  items_for_sale          UsedItem[]         @relation("UserUsedItems")
+  user_options            UserOption?
+  permissions             Permission?
 
-  @@index([login_name])
   @@index([ships_killed])
   @@index([turns_run])
+  // Note: login_name is not indexed here as it's not unique and likely not a primary search key for this table directly
+}
+
+// --- Tables from new_server.sql and user_accounts.sql ---
+
+// From user_accounts.sql
+// This model corresponds to user_accounts (global user data)
+model UserAccount {
+  login_id             Int     @id @default(autoincrement())
+  login_name           String  @unique @db.VarChar(30)
+  passwd               String  @db.VarChar(45) // Should be hashed
+  auth                 Int     @default(0) // SQL: auth int(11) NOT NULL default '0'
+  first_name           String  @default("") @db.VarChar(30) // SQL: first_name varchar(30) NOT NULL default ''
+  last_name            String  @default("") @db.VarChar(30) // SQL: last_name varchar(30) NOT NULL default ''
+  email_address        String  @unique @db.VarChar(40) // SQL: email_address varchar(40) NOT NULL default ''
+  icq                  Int     @default(0) // SQL: icq int(11) NOT NULL default '0'
+  aim                  String  @default("") @db.VarChar(50) // SQL: aim varchar(50) NOT NULL default ''
+  msn                  String  @default("") @db.VarChar(50) // SQL: msn varchar(50) NOT NULL default ''
+  yim                  String  @default("") @db.VarChar(50) // SQL: yim varchar(50) NOT NULL default ''
+  signed_up            Int     @default(0) // SQL: signed_up int(11) NOT NULL default '0'
+  session_exp          Int     @default(0) // SQL: session_exp int(11) NOT NULL default '0'
+  session_id           Int     @default(0) // SQL: session_id int(11) NOT NULL default '0'
+  last_login           Int     @default(0) // SQL: last_login int(11) NOT NULL default '0'
+  login_count          Int     @default(0) // SQL: login_count int(11) NOT NULL default '0'
+  last_ip              String  @default("") @db.VarChar(16) // SQL: last_ip varchar(16) NOT NULL default ''
+  num_games_joined     Int     @default(0) // SQL: num_games_joined int(11) NOT NULL default '0'
+  total_score          Int     @default(0) // SQL: total_score int(11) NOT NULL default '0'
+  con_speed            Int     @default(2) @db.TinyInt // SQL: con_speed tinyint(4) NOT NULL default '2'
+  default_color_scheme Int     @default(1) @db.TinyInt // SQL: default_color_scheme tinyint(4) NOT NULL default '1'
+  country              String  @default("") @db.VarChar(150) // SQL: country varchar(150) NOT NULL default ''
+  hear_from            String  @default("") @db.VarChar(150) // SQL: hear_from varchar(150) NOT NULL default ''
+  e_list               Boolean @default(true) // SQL: e_list tinyint(4) NOT NULL default '1'
+  birth_date           Int     @default(0) // SQL: birth_date int(11) NOT NULL default '0'
+  sex                  Int     @default(0) @db.TinyInt // SQL: sex tinyint(4) NOT NULL default '0'
+  hint_question        String  @default("") @db.Text // SQL: hint_question text NOT NULL
+  hint_answer          String  @default("") @db.Text // SQL: hint_answer text NOT NULL
+  newsletter           Boolean @default(false) // SQL: newsletter tinyint(4) NOT NULL default '0'
+
+  game_instances User[]        @relation("UserAccountGameInstances")
+  bank_account   BankAccount?
+  permissions    Permission?   @relation(references: [login_id])
+  user_options   UserOption?   @relation("UserAccountOptions")
+}
+
+model UserHistory {
+  login_id   Int
+  timestamp  Int
+  game_db    String @db.VarChar(30)
+  action     String @db.Text
+  user_IP    String @db.VarChar(16)
+  other_info String @db.Text
+  // This table doesn't have a primary key in the SQL.
+  // Prisma requires one. We can add a composite key or an @id field.
+  // For now, let's assume a composite key based on common access patterns or add an id if needed.
+  @@id([login_id, timestamp, game_db(length: 30)]) // Example, adjust if needed
+}
+
+// From new_server.sql
+model DailyTip {
+  tip_id      Int    @id @default(autoincrement()) @unique
+  tip_content String @db.Text
+
+  @@index([tip_id], name: "tip_id_2")
+}
+
+model DefaultUpgradeLoad {
+  ship_id            Int      @id @unique // This is ship_id from SQL, likely type_id from ship_types
+  ship_type          ShipType @relation(fields: [ship_id], references: [type_id])
+  pass_sensor        Int      @default(0) @db.UnsignedInt
+  stand_scanner      Int      @default(0) @db.UnsignedInt
+  adv_scanner        Int      @default(0) @db.UnsignedInt
+  grav_scanner       Int      @default(0) @db.UnsignedInt
+  subs_array         Int      @default(0) @db.UnsignedInt
+  alien_array        Int      @default(0) @db.UnsignedInt
+  stand_cloak        Int      @default(0) @db.UnsignedInt
+  adv_cloak          Int      @default(0) @db.UnsignedInt
+  pir_deflect        Int      @default(0) @db.UnsignedInt
+  spat_unit          Int      @default(0) @db.UnsignedInt
+  dim_flux           Int      @default(0) @db.UnsignedInt
+  laser_cannon       Int      @default(0) @db.UnsignedInt
+  thor_hammer        Int      @default(0) @db.UnsignedInt
+  emp_disruptor      Int      @default(0) @db.UnsignedInt
+  plasma_cannon      Int      @default(0) @db.UnsignedInt
+  einstein_projector Int      @default(0) @db.UnsignedInt
+  laser_ward         Int      @default(0) @db.UnsignedInt
+  flak_cannon        Int      @default(0) @db.UnsignedInt
+  emp_blaster        Int      @default(0) @db.UnsignedInt
+  silicon_armour     Int      @default(0) @db.UnsignedInt
+  ramscoop           Int      @default(0) @db.UnsignedInt
+}
+
+model Era {
+  era_id    Int    @id @default(autoincrement()) @db.TinyInt
+  descrip   String @db.Text
+  no_races  Int    @default(1) @db.TinyInt
+  year      String @default("0") @db.VarChar(40)
+  races     Race[] @relation("EraRaces")
+  shipTypes ShipType[] @relation("EraShipTypes")
+  upgradeList UpgradeList[] @relation("EraUpgrades")
+}
+
+model OptionList {
+  option_name String @id @db.VarChar(50)
+  option_min  Int    @default(0)
+  option_max  Int    @default(0)
+  option_desc String @db.Text
+  option_type Int    @default(1) @db.TinyInt
+}
+
+model QbaseChallengeRecord {
+  chal_id   Int    @id @default(autoincrement())
+  sessid    String @db.VarChar(64)
+  challenge String @db.VarChar(64)
+  timestamp Int
+}
+
+model QsseHomeNews {
+  news_id    Int    @id @default(autoincrement())
+  admin_name String @default("") @db.VarChar(64)
+  timestamp  Int    @default(0)
+  login_id   Int    @default(0)
+  text       String @db.Text // text in SQL was blob, assumed text
+  game_id    Int    @default(1)
+
+  @@index([login_id])
+  @@index([timestamp])
+}
+
+model Race {
+  key_id         Int    @id @db.TinyInt // SQL: key_id tinyint(4) NOT NULL default '0'
+  era_id         Int    @db.TinyInt // SQL: era tinyint(4) NOT NULL default '0'
+  era_ref        Era    @relation("EraRaces", fields: [era_id], references: [era_id])
+  race_ID        Int    @unique @db.TinyInt // SQL: race_ID tinyint(4) NOT NULL default '0'
+  planet_name    String @db.Text
+  planet_descrip String @db.Text
+  ship           String @db.Text
+  equip          String @db.Text
+  upgrade        String @db.Text
+  colo           String @db.Text
+  bank           String @db.Text
+  auction        String @db.Text
+  used           String @db.Text
+  auth           String @db.Text
+  img            String @db.Text
+  hw_s_name      String @db.Text
+  race_name      String @db.Text
+  race_descrip   String @db.Text
+  shipTypes    ShipType[]    @relation("RaceShipTypes")
+  upgradeList  UpgradeList[] @relation("RaceUpgrades")
+}
+
+model SeGame {
+  game_id             Int    @id @default(autoincrement()) @db.TinyInt
+  name                String @db.VarChar(45)
+  db_name             String @db.VarChar(45)
+  admin_name          String @default("Admin") @db.VarChar(200)
+  admin_pw            String @default("passwd") @db.VarChar(32)
+  admin_email         String @db.VarChar(45)
+  site_address        String @db.VarChar(45)
+  status              Int    @default(1) @db.TinyInt
+  paused              Int    @default(1) @db.TinyInt
+  description         String @db.Text
+  intro_message       String @db.Text
+  num_stars           Int    @default(150)
+  difficulty          Int    @default(3)
+  last_reset          Int    @default(0)
+  todays_tip          Int    @default(1)
+  game_length_days    Int    @default(30)
+  game_days_remaining Int    @default(30)
+  sd_day_num          Int    @default(20)
+  day_maint_cnt       Int    @default(1)
+  session_id          Int    @default(0)
+  hidden              Int    @default(0) @db.TinyInt
+  paused_day_count    Int    @default(0) @db.TinyInt
+  game_auto           Int    @default(0) @db.TinyInt
+  auto_pass           Int    @default(0) @db.TinyInt
+  teams               Int    @default(0) @db.TinyInt
+}
+
+model ShipType {
+  type_id              Int     @id @default(autoincrement()) @db.UnsignedInt
+  purchase_loc         Int     @default(0) @db.TinyInt
+  ship_categ           Int     @default(0) @db.TinyInt
+  race_id              Int     @default(1) @db.TinyInt // Was 'race'
+  race_ref             Race    @relation("RaceShipTypes", fields: [race_id], references: [race_ID])
+  era_id               Int     @default(0) @db.TinyInt // Was 'era'
+  era_ref              Era     @relation("EraShipTypes", fields: [era_id], references: [era_id])
+  name                 String  @db.VarChar(60) // SQL: name varchar(60) NOT NULL default ''
+  type                 String  @db.VarChar(30)
+  class_abbr           String  @db.VarChar(10)
+  cost                 Int     @default(0) @db.UnsignedInt
+  tcost                Int     @default(0) @db.UnsignedInt
+  fighters             Int     @default(0) @db.UnsignedInt
+  max_fighters         Int     @default(0) @db.UnsignedInt
+  max_shields          Int     @default(0) @db.UnsignedInt
+  cargo_bays           Int     @default(0) @db.UnsignedInt
+  mine_rate_metal      Int     @default(0) @db.UnsignedInt
+  mine_rate_fuel       Int     @default(0) @db.UnsignedInt
+  mine_rate_darkmatter Int     @default(0) @db.UnsignedInt
+  mine_rate            Int     @default(0) @db.UnsignedInt
+  descr                String  @db.Text
+  size                 Int     @default(0) @db.TinyInt
+  config               String  @db.VarChar(30)
+  upgrades             Int     @default(0) @db.UnsignedInt
+  auction              Boolean @default(false) @db.TinyInt // SQL: tinyint(4) NOT NULL default '0'
+  move_turn_cost       Int     @default(1) @db.UnsignedInt
+  point_value          Int     @default(0) @db.UnsignedInt
+  tech_bonus           Int     @default(0) @db.UnsignedInt
+  bonus_attack         Boolean @default(false) @db.TinyInt // SQL: tinyint(4) NOT NULL default '0'
+  num_pc               Int     @default(0) @db.UnsignedInt
+  num_ot               Int     @default(0) @db.UnsignedInt
+  num_dt               Int     @default(0) @db.UnsignedInt
+  num_sa               Int     @default(0) @db.UnsignedInt
+  num_ew               Int     @default(0) @db.UnsignedInt
+  num_mi               Int     @default(0) @db.UnsignedInt
+  upg_index            String  @db.VarChar(10)
+  shield_1             Int     @default(0) @db.UnsignedInt
+  shield_2             Int     @default(0) @db.UnsignedInt
+  shield_3             Int     @default(0) @db.UnsignedInt
+  shield_4             Int     @default(0) @db.UnsignedInt
+  shield_5             Int     @default(0) @db.UnsignedInt
+  shield_charge        Int     @default(0) @db.UnsignedInt
+  max_charge           Int     @default(0) @db.UnsignedInt
+  shield_prts          Int     @default(0) @db.UnsignedInt
+
+  admin_ship_configs AdminShip[]
+  default_upgrades   DefaultUpgradeLoad?
+  ships              Ship[]              @relation(references: [ship_type_id]) // Inverse of Ship.ship_type_info
+
+  @@index([type_id])
+}
+
+model UpgradeList {
+  item_id  Int    @id @default(autoincrement()) @unique @db.UnsignedInt
+  name     String @db.VarChar(96)
+  era_id   Int    @db.TinyInt // Was 'era'
+  era_ref  Era    @relation("EraUpgrades", fields: [era_id], references: [era_id])
+  race_id  Int    @db.TinyInt // Was 'race'
+  race_ref Race   @relation("RaceUpgrades", fields: [race_id], references: [race_ID])
+  type     Int    @db.TinyInt
+  level    Int    @db.TinyInt
+  seller   Int    @db.TinyInt
+  cost     Int    @db.UnsignedInt
+  tech     Int    @db.UnsignedInt
+  sql_name String @db.VarChar(96)
+  inc      Int    @db.UnsignedInt
+  damage   Int    @db.UnsignedInt
+  lim      Int    @db.UnsignedInt
+  abbrev   String @db.VarChar(5)
+  info     String @db.VarChar(96)
 }
