@@ -51,6 +51,79 @@
 //   3. Invalidate/delete token.
 //   4. Redirect or return success.
 
+// --- Forum API Routes (mapped from forum.php, forum_clan.php, forum_game.php, posting.php) ---
+// Using GameForumMessage for general game forums and ClanForumMessage for clan forums.
+// A message with reply_to = 0 (or a designated initial value like NULL if schema allows) is a thread starter.
+
+// General Game Forums:
+// API Route: GET /api/forums/game/threads?page={page_num}&limit={limit_num}
+// Auth: User authenticated.
+// Logic:
+//   1. Fetch `GameForumMessage` where `reply_to == 0` (or designated thread starter value).
+//   2. Include author details (Prisma: `User` -> `UserAccount` for name).
+//   3. Include count of replies and last reply timestamp/author for each thread (requires subqueries or aggregation).
+//   4. Implement pagination.
+//   5. Return list of threads.
+//
+// API Route: GET /api/forums/game/threads/[threadId]?page={page_num}&limit={limit_num}
+// Auth: User authenticated.
+// Logic:
+//   1. Fetch the main thread post (`GameForumMessage` where `message_id == threadId`). Include author.
+//   2. Fetch replies (`GameForumMessage` where `reply_to == threadId`). Paginate replies. Include author.
+//   3. Return thread starter post and its paginated replies.
+//
+// API Route: POST /api/forums/game/threads
+// Auth: User authenticated.
+// Request Body: { subject: string, text: string }
+// Logic:
+//   1. Validate inputs.
+//   2. Create new `GameForumMessage` with `reply_to = 0` (or designated starter value), `subject`, `text`, `sender_id` (from session), `sender_name` (from session user).
+//   3. Return new thread data.
+//
+// API Route: POST /api/forums/game/threads/[threadId]/reply
+// Auth: User authenticated.
+// Request Body: { text: string }
+// Logic:
+//   1. Validate `threadId` exists.
+//   2. Validate `text`.
+//   3. Create new `GameForumMessage` with `reply_to = threadId`, `text`, `sender_id`, `sender_name`. `subject` can be empty or "Re: [original_subject]".
+//   4. Update last reply timestamp/info on the parent thread (original `GameForumMessage` with `message_id == threadId`). This might require adding fields like `last_reply_at`, `last_reply_by_id` to `GameForumMessage`.
+//   5. Return new post data.
+
+// Clan Forums:
+// API Route: GET /api/clans/[clanId]/forum/threads?page={page_num}&limit={limit_num}
+// Auth: User authenticated and member of `clanId` (or admin).
+// Logic: Similar to game forum threads, but scoped to `ClanForumMessage.clan_id == clanId`.
+//
+// API Route: GET /api/clans/[clanId]/forum/threads/[threadId]?page={page_num}&limit={limit_num}
+// Auth: User authenticated and member of `clanId` (or admin).
+// Logic: Similar to game forum thread view, but for `ClanForumMessage`.
+//
+// API Route: POST /api/clans/[clanId]/forum/threads
+// Auth: User authenticated and member of `clanId`.
+// Request Body: { subject: string, text: string }
+// Logic: Creates `ClanForumMessage` with `reply_to = 0`, `clan_id`.
+//
+// API Route: POST /api/clans/[clanId]/forum/threads/[threadId]/reply
+// Auth: User authenticated and member of `clanId`.
+// Request Body: { text: string }
+// Logic: Creates `ClanForumMessage` with `reply_to = threadId`, `clan_id`. Updates parent thread.
+
+// Common Post Actions (Game & Clan forums):
+// API Route: PUT /api/forums/posts/[postId]?type={game|clan}
+// Auth: User authenticated, owner of post or moderator/admin.
+// Request Body: { text: string, subject?: string (if it's a thread starter) }
+// Logic: Updates `text` (and `subject` if applicable) of `GameForumMessage` or `ClanForumMessage`.
+//
+// API Route: DELETE /api/forums/posts/[postId]?type={game|clan}
+// Auth: User authenticated, owner of post or moderator/admin.
+// Logic: Deletes `GameForumMessage` or `ClanForumMessage`. Consider soft delete.
+//        If a thread starter is deleted, decide on handling replies (cascade delete or mark as orphaned).
+//
+// API Route: POST /api/forums/posts/[postId]/log-to-diary?type={game|clan}
+// Auth: User authenticated.
+// Logic: Fetches post content and creates a new `DiaryEntry` for the user.
+
 // Game-Specific Authentication / Joining a Game:
 // API Route: POST /api/game/join
 // Request Body: { gameDbName: string, adminGamePassword?: string }
@@ -262,6 +335,142 @@
 //        c. Apply normalization factor (from appConfig.clanMemberLimit * 10).
 //        d. Update the Clan record with these new aggregated stats (Prisma: Clan model).
 //   This function is crucial for keeping clan leaderboards and stats accurate.
+
+// --- Admin Panel API Routes (from admincp/* files) ---
+// All admin routes must be protected by `ensureAdmin()` util.
+
+// Dashboard Summary (from admincp/index.php):
+// API Route: GET /api/admin/dashboard-summary
+// Auth: Admin only.
+// Logic:
+//   1. Fetch game status (paused, rejoin delay status from `SeGame` and `DbVar`).
+//   2. Potentially fetch other summary stats (e.g., number of players, active players - from `User`, `UserAccount`).
+//   3. Return summary data.
+
+// Pause/Unpause Game (from admincp/index.php):
+// API Route: POST /api/admin/game/pause
+// Auth: Admin only.
+// Request Body: { pause: boolean } (true to pause, false to unpause)
+// Logic:
+//   1. Update `SeGame.paused` status (Prisma).
+//   2. Post news item (`News` model).
+//   3. If unpausing, potentially trigger email to users (original PHP `mail_users`). This requires email service.
+//   4. Return success.
+
+// Toggle Rejoin Delay (from admincp/index.php):
+// API Route: POST /api/admin/settings/toggle-rejoin-delay
+// Auth: Admin only.
+// Request Body: { enable: boolean }
+// Logic:
+//   1. Update `DbVar` for `rejoin_delay` (Prisma).
+//   2. **NOTE:** Original PHP added/dropped a column from `user_accounts` table (`ALTER TABLE`).
+//      This is highly problematic for Prisma and schema management.
+//      A better approach: The `rejoin_delay` DbVar controls the *logic* of checking rejoin delay.
+//      The actual timestamp of when a user can rejoin after retiring would be stored in a dedicated
+//      field on the `UserAccount` or a separate `RetiredUser` table. No ALTER TABLE needed.
+//      This API should only toggle the DbVar. Manual DB migration or a different strategy is needed for the timestamp field.
+//   3. Return success.
+
+// User Management:
+// API Route: GET /api/admin/users?page={pageNum}&limit={limitNum}&searchLogin={query}&searchEmail={query}&sortBy={field}&sortOrder={asc|desc}
+// Auth: Admin only.
+// Logic:
+//   1. Fetch `UserAccount` records with pagination, filtering (by login_name, email), and sorting.
+//   2. Include related `Permission` data.
+//   3. Return list of users and pagination details.
+//
+// API Route: GET /api/admin/users/[userId]
+// Auth: Admin only.
+// Logic:
+//   1. Fetch specific `UserAccount` by `userId`. Include related `Permission`, game-specific `User` data (if relevant for admin view).
+//   2. Return user details.
+//
+// API Route: PUT /api/admin/users/[userId]
+// Auth: Admin only.
+// Request Body: { /* fields from UserAccount to update */, permissions: { /* fields from Permission */ } }
+// Logic:
+//   1. Validate input.
+//   2. Update `UserAccount` record (Prisma).
+//   3. Update related `Permission` record (Prisma).
+//   4. Consider auditing this change.
+//   5. Return updated user details.
+//
+// API Route: DELETE /api/admin/users/[userId]
+// Auth: Admin only.
+// Logic:
+//   1. Soft delete or hard delete `UserAccount` (and related game `User` records, handle cascades/cleanup).
+//   2. Consider implications (e.g., what happens to their planets, ships, posts). Full deletion is complex.
+//      Soft delete (e.g., marking as inactive) is often safer.
+//   3. Return success.
+
+// Game Variables Management (from admincp/admin_vars.php):
+// API Route: GET /api/admin/game-variables
+// Auth: Admin only.
+// Logic:
+//   1. Fetch all records from `DbVar` table (Prisma).
+//   2. Return list of game variables.
+//
+// API Route: PUT /api/admin/game-variables
+// Auth: Admin only.
+// Request Body: { variables: Array<{ name: string, value: string }> }
+// Logic:
+//   1. For each variable in the array:
+//      a. Validate `name` exists in `DbVar`.
+//      b. Validate `value` against `DbVar.min`, `DbVar.max`, `DbVar.type` (requires careful type conversion and validation as `DbVar.value` is string).
+//      c. Update `DbVar.value` for that variable (Prisma).
+//   2. Preferably perform updates in a transaction.
+//   3. Return success or updated variables.
+
+// --- Universe, Map, and Location API Routes (from main_map.php, star_map.php, location.php) ---
+
+// Galaxy Map Data:
+// API Route: GET /api/universe/galaxy-map
+// Auth: Public or protected depending on game rules.
+// Logic:
+//   1. Fetch all (or a relevant subset of) `Star` records (star_id, name, x_loc, y_loc, sys_type, links, wormhole).
+//   2. Fetch relevant `DbVar` values like `uv_universe_size`, `uv_show_warp_numbers`.
+//   3. Return data for client-side map rendering.
+//      (Replaces data fetching in `main_map.php`)
+
+// Star System Information:
+// API Route: GET /api/universe/star-system/[systemId]
+// Auth: Public or protected.
+// Logic:
+//   1. Get `systemId` from path.
+//   2. Fetch `Star` record for `systemId`.
+//   3. Include related data: `Planet`s in system, `Port`s, `Bmrkt`s, `Shipyard`s.
+//   4. Include a summary of `Ship`s in system (e.g., counts, basic details, limited list).
+//   5. Fetch wormhole destination details if `Star.wormhole` is set.
+//   6. Return comprehensive system data.
+//      (Replaces data fetching for `location.php`'s main display and potentially parts of `star_map.php`)
+
+// Player's Current Location & System Details:
+// API Route: GET /api/player/location
+// Auth: Protected (must be self).
+// Logic:
+//   1. Get authenticated user's `login_id`.
+//   2. Fetch `User.location` (current `star_id`).
+//   3. Fetch detailed information for that `star_id` (similar to `GET /api/universe/star-system/[systemId]`).
+//   4. Return player-specific context (e.g., current ship ID) and system details.
+//      (Provides data for `location.php` from player's perspective)
+
+// Player Movement:
+// API Route: POST /api/player/move
+// Auth: Protected (must be self).
+// Request Body: { targetSystemId: number }
+// Logic:
+//   1. Get authenticated user's `login_id` and current `User.location`.
+//   2. Validate `targetSystemId` (is it linked to current system? from `Star` links).
+//   3. Validate turns/fuel (simplified: check basic turn cost; full logic is complex).
+//   4. **Perform Random Event Check at Destination (critical):**
+//      - Fetch `Star.event_random` for `targetSystemId`.
+//      - If event (Black Hole, Nebula, etc.):
+//        - Trigger event-specific logic (e.g., scatter player if Black Hole & not newbie, deplete shields if Nebula).
+//        - This might change the `finalSystemId` or apply effects.
+//        - This logic is based on `random_event_checker()` and `black_hole()` from `random_events.inc.php`.
+//   5. Update `User.location` to `finalSystemId` and deduct turns (Prisma). Increment `User.turns_run`.
+//   6. Return new location, user status, and any event messages/outcomes.
+//      (Replaces navigation logic from `location.php`)
 
 // From includes/ship_purchase_funcs.inc.php:
 // - Main Ship Purchase Flow (combining Add_ShipToDatabase, Check_Shipyard, Add_ShipUpgrades, Update_DatabaseForMassPurchase):

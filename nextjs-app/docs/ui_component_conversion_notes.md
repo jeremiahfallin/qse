@@ -44,6 +44,56 @@
 //   The logic to determine the current shop type (Earth, Blackmarket, Alien Shipyard) will be part of the
 //   page or component context that renders the <ShipShopView />.
 
+// --- Forum Components (from forum.php, forum_clan.php, forum_game.php, posting.php) ---
+// These components will interact with the forum API routes.
+// The Prisma schema uses GameForumMessage and ClanForumMessage.
+// A "thread" is conceptually a GameForumMessage/ClanForumMessage with reply_to = 0 (or specific starter ID).
+
+// - ForumListPage:
+//   - Purpose: Displays a list of threads for a given forum type (game or clan).
+//   - Props: `forumType: 'game' | 'clan'`, `clanId?: number` (if clan forum).
+//   - Fetches data from:
+//     - `GET /api/forums/game/threads`
+//     - `GET /api/clans/[clanId]/forum/threads`
+//   - Displays: List of threads (subject, author, reply count, last post info). Each thread title links to `ThreadViewPage`.
+//   - Includes: Link/button to `<CreateThreadForm />`.
+//
+// - ThreadViewPage:
+//   - Purpose: Displays a single thread (the initial post) and its replies, with pagination for replies.
+//   - Props: `threadId: number`, `forumType: 'game' | 'clan'`, `clanId?: number` (if clan forum).
+//   - Fetches data from:
+//     - `GET /api/forums/game/threads/[threadId]`
+//     - `GET /api/clans/[clanId]/forum/threads/[threadId]`
+//   - Displays: The main/initial post, followed by a paginated list of reply posts using `<ForumPostDisplay />`.
+//   - Includes: `<ReplyFormComponent />` at the end.
+//
+// - ForumPostDisplay:
+//   - Purpose: Renders a single forum post (either a thread starter or a reply).
+//   - Props: `post: GameForumMessage | ClanForumMessage` (or a unified type), `currentUser: SessionUser`, `forumType: 'game' | 'clan'`.
+//   - Displays: Author info (name, avatar if available), post content (parsed from BBCode-like format), timestamp.
+//   - Conditional Actions: Shows Edit/Delete buttons if current user is author or moderator (calls respective APIs). Shows "Log to Diary" button (calls API). Shows "Reply" button (pre-fills `ReplyFormComponent`).
+//
+// - CreateThreadForm:
+//   - Purpose: Form to create a new thread.
+//   - Props: `forumType: 'game' | 'clan'`, `clanId?: number`.
+//   - UI: Input for subject, textarea for post content (ideally a `<BBCodeEditorComponent />`).
+//   - Submits to:
+//     - `POST /api/forums/game/threads`
+//     - `POST /api/clans/[clanId]/forum/threads`
+//
+// - ReplyFormComponent:
+//   - Purpose: Form to reply to an existing thread.
+//   - Props: `threadId: number`, `forumType: 'game' | 'clan'`, `clanId?: number`, `replyToSubject?: string`.
+//   - UI: Textarea for post content (`<BBCodeEditorComponent />`). Subject might be pre-filled "Re: [original_subject]".
+//   - Submits to:
+//     - `POST /api/forums/game/threads/[threadId]/reply`
+//     - `POST /api/clans/[clanId]/forum/threads/[threadId]/reply`
+//
+// - BBCodeEditorComponent:
+//   - Replaces the JavaScript BBCode editor logic found in `posting.php` and the helper function `RequestMessage_GameForum`.
+//   - Provides UI buttons for bold, italic, underline, quote, code, list, img, url, color, size.
+//   - Interacts with a textarea or a more advanced rich text editor component.
+
 // From includes/clan_funcs.inc.php:
 // - Print_ClanDetailsFull():
 //   Generates a large HTML block for displaying comprehensive clan statistics and details.
@@ -103,6 +153,66 @@
 // All Smarty templates (.tpl files) will be replaced by React components.
 // Logic within PHP functions that prepares data for Smarty ($tpl->assign(...))
 // will be adapted into data fetching for React components or prop preparation.
+
+// --- Admin Panel Components (from admincp/* files) ---
+
+// - AdminLayoutComponent:
+//   - Purpose: Provides the overall structure for the admin panel (e.g., header, sidebar navigation, main content area).
+//   - Contains: Navigation links to different admin sections.
+//   - Handles: Admin authentication/authorization context, ensuring only admins can access.
+//
+// - AdminDashboardPageComponent:
+//   - Purpose: Displays the main admin dashboard (contents of `admincp/index.php`).
+//   - Fetches data from: `GET /api/admin/dashboard-summary`.
+//   - Displays: Summary statistics, game status toggles (pause, rejoin delay).
+//   - Actions: Triggers API calls like `POST /api/admin/game/pause`, `POST /api/admin/settings/toggle-rejoin-delay`.
+//
+// - AdminUserManagementPageComponent:
+//   - Purpose: For listing, viewing, editing, and potentially deleting users.
+//   - Fetches data from: `GET /api/admin/users` (with pagination, search, sort).
+//   - Displays: A table or list of users. Links to view/edit individual users.
+//   - Components:
+//     - `<UserListTable users={...} />`
+//     - `<UserDetailsView userId={...} />` (fetches from `GET /api/admin/users/[userId]`)
+//     - `<UserEditForm userData={...} />` (submits to `PUT /api/admin/users/[userId]`)
+//
+// - AdminGameVariablesPageComponent:
+//   - Purpose: For viewing and editing game variables stored in the `DbVar` table.
+//   - Fetches data from: `GET /api/admin/game-variables`.
+//   - Displays: A list or form with all game variables, their descriptions, and current values.
+//   - Actions: Allows editing values and submitting all changes via `PUT /api/admin/game-variables`.
+//
+// - Other Admin Page Components (based on other files in admincp/):
+//   - As more admin PHP files are analyzed (e.g., `admin_planets.php`, `admin_clans.php`),
+//     corresponding page components and CRUD interface components will be documented here.
+
+// From main_map.php and star_map.php (Universe/Map display):
+// - `main_map.php` (Galaxy Map Display):
+//   This PHP script generates a PNG image of the galaxy map.
+//   In Next.js, this will be replaced by a React component: <GalaxyMapComponent mapData={data_from_api} />.
+//   This component will fetch data from `GET /api/universe/galaxy-map` and use a client-side
+//   rendering library (e.g., PixiJS, D3.js, HTML5 Canvas/SVG) to draw the interactive map.
+// - `star_map.php` (Minimap / Local System View for a specific star):
+//   This PHP script generates a smaller PNG by cropping a pre-rendered full map.
+//   In Next.js, this could be part of the <GalaxyMapComponent /> functionality (zooming/panning to a region)
+//   or a separate <StarSystemMiniMapComponent systemId={...} /> that either uses the full client-side
+//   map data or fetches specific regional data from a new API endpoint if needed.
+//   The primary data source remains `GET /api/universe/galaxy-map`.
+
+// From location.php (Display aspects of current star system):
+// - The main view of `location.php` (displaying current system details, planets, ships, ports, etc.)
+//   will be a major React component, e.g., <StarSystemViewComponent systemId={currentSystemId} /> or part of a
+//   <PlayerLocationDashboardComponent />.
+//   This component will primarily use data fetched from `GET /api/universe/star-system/[systemId]`
+//   (for general system details) and `GET /api/player/location` (for player-specific context and current system ID).
+//   It will integrate various sub-components previously noted:
+//     - `<SystemResourcesDisplay />` (from `Display_Resources` in `print_funcs.inc.php`)
+//     - `<SystemOverviewCard />` (from `SystemInfo` in `location_funcs.inc.php`)
+//     - Lists of planets (using `<PlanetCard />`)
+//     - Lists of player's and other players' ships/fleets (using `<ShipListLocationBased />`, `<EnemyShipListLocationBased />`)
+//     - Links to facilities (starports, black markets, etc.)
+//     - Navigation links to adjacent systems (using `<StarLink />`)
+//     - Triggers for actions like mining (`<MiningInterfaceComponent />`) or fleet link management (`<FleetLinkForm />`).
 
 // From player_info.php:
 // - Main display logic:
